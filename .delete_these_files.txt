@@ -1,0 +1,12 @@
+pages/dashboard.js
+pages/players.js
+pages/tournaments.js
+pages/courses.js
+pages/specials.js
+pages/accounting.js
+pages/index.js
+pages/claims.js
+pages/useAuth.js
+pages/_app.js
+pages/events.js
+pages/crm.js

@@ -2,6 +2,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
+import { parse } from 'cookie';
+import { GetServerSideProps } from 'next';
 
 // Block navigation data
 const pages = [
@@ -92,6 +94,24 @@ const recentActivity = [
 	{ id: 3, user: 'Mike Davis', action: 'Updated Profile', time: '6 hours ago' },
 	{ id: 4, user: 'Lisa Wilson', action: 'Payment Processed', time: '8 hours ago' }
 ];
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+	const { req, res } = context;
+	const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
+	const token = cookies.adminToken;
+
+	// You can add more robust token validation here if needed
+	if (!token) {
+		return {
+			redirect: {
+				destination: '/login',
+				permanent: false,
+			},
+		};
+	}
+
+	return { props: {} };
+};
 
 export default function Dashboard() {
 	const { user, loading } = useAuth();

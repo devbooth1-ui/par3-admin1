@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useRouter } from 'next/router';
+import Cookies from 'js-cookie';
 
 export default function Login() {
     const { login, user } = useAuth();
@@ -29,6 +30,8 @@ export default function Login() {
             if (response.ok) {
                 const data = await response.json();
                 localStorage.setItem('adminToken', data.token);
+                // Set cookie for SSR auth
+                Cookies.set('adminToken', data.token, { expires: 7, sameSite: 'strict', path: '/' });
                 // Simulate user data for login context, now with role
                 login({ email, token: data.token, role: data.role });
             } else {

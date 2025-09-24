@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
 
 export function useAuth() {
   const [user, setUser] = useState(null);
@@ -35,6 +36,7 @@ export function useAuth() {
     setUser(null);
     localStorage.removeItem('adminUser');
     localStorage.removeItem('adminToken');
+    Cookies.remove('adminToken', { path: '/' });
   };
 
   return { user, login, logout, loading };

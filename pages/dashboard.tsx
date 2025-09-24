@@ -96,14 +96,19 @@ const recentActivity = [
 export default function Dashboard() {
 	const { user, loading } = useAuth();
 	const router = useRouter();
+	const [hydrated, setHydrated] = React.useState(false);
 
 	useEffect(() => {
-		if (!loading && !user) {
+		setHydrated(true);
+	}, []);
+
+	useEffect(() => {
+		if (hydrated && !loading && !user) {
 			router.replace('/login');
 		}
-	}, [user, loading, router]);
+	}, [hydrated, user, loading, router]);
 
-	if (loading || !user) return null;
+	if (!hydrated || loading || !user) return null;
 
 	return (
 		<AdminLayout>

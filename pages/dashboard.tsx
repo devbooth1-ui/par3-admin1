@@ -99,11 +99,11 @@ export default function Dashboard() {
 
 	useEffect(() => {
 		if (!loading && !user) {
-			router.push('/login');
+			router.replace('/login');
 		}
 	}, [user, loading, router]);
 
-	if (loading) return null;
+	if (loading || !user) return null;
 
 	return (
 		<AdminLayout>

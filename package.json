@@ -1,5 +1,5 @@
 {
-    "name": "par3-admin-dashboard",
+    "name": "par3-admin1",
     "version": "1.0.0",
     "private": true,
     "scripts": {
@@ -18,7 +18,8 @@
         "next": "14.2.32",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
-        "react-icons": "^5.5.0"
+        "react-icons": "^5.5.0",
+        "@sendgrid/mail": "^7.7.0"
     },
     "devDependencies": {
         "@types/cookie": "^0.6.0",

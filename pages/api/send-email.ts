@@ -1,25 +1,34 @@
-export default function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ message: 'Method not allowed' })
+import sgMail from '@sendgrid/mail';
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+export default async function handler(req, res) {
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
     }
 
-    const { to, subject, body } = req.body
+    if (req.method !== 'POST') {
+        return res.status(405).json({ message: 'Method not allowed' });
+    }
 
-    // Log the email that would be sent
-    console.log('📧 EMAIL NOTIFICATION TO:', to)
-    console.log('📧 SUBJECT:', subject)
-    console.log('📧 BODY:', body)
+    const {
+        to = 'devbooth1@yahoo.com',
+        subject = 'You have a claim!',
+        text = 'A new claim has been submitted. Please review.',
+        html = `<strong>A new claim has been submitted. <a href="https://par3-challenge-app-tailwind.vercel.app/claims">Review it here.</a></strong>`
+    } = req.body;
 
-    // In a real implementation, you would use a service like SendGrid, AWS SES, etc.
-    // For demo purposes, we'll just log it and return success
+    const msg = { to, from: 'devbooth1@yahoo.com', subject, text, html };
 
-    // Simulate email sending
-    setTimeout(() => {
-        console.log('✅ Email sent successfully to', to)
-    }, 1000)
-
-    res.status(200).json({
-        success: true,
-        message: `Email notification logged for ${to}`
-    })
+    try {
+        await sgMail.send(msg);
+        res.status(200).json({ success: true, message: `Email sent to ${to}` });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
 }

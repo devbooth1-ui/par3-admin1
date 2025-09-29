@@ -10,6 +10,18 @@ async function getClient() {
 }
 
 export default async function handler(req, res) {
+  // --- CORS HEADERS ---
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173'); // Add your prod frontend domain as needed
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight CORS request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  // --- END CORS ---
+
   if (req.method === 'GET') {
     // Fetch the most recently added tournament
     try {
@@ -42,7 +54,7 @@ export default async function handler(req, res) {
       res.status(500).json({ error: error.message });
     }
   } else {
-    res.setHeader('Allow', ['GET', 'POST']);
+    res.setHeader('Allow', ['GET', 'POST', 'OPTIONS']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }

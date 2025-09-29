@@ -23,6 +23,18 @@ type Claim = {
 let claims: Claim[] = []
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  // --- CORS HEADERS ---
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173'); // Change/add your frontend prod URL as needed
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight CORS request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  // --- END CORS ---
+
   if (req.method === 'GET') {
     res.status(200).json(claims)
   } else if (req.method === 'POST') {

@@ -410,10 +410,10 @@ Don't miss this special event!
             ))}
           </div>
 
-          {/* Add Event Modal */}
+          {/* Add Event Modal - perfectly centered */}
           {showAddModal && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-              <div className="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-600 bg-opacity-50">
+              <div className="relative w-full max-w-lg p-5 border shadow-lg rounded-md bg-white">
                 <div className="mt-3">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Event</h3>
                   <form className="space-y-4" onSubmit={addEvent}>

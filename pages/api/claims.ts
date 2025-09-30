@@ -24,9 +24,8 @@ let claims: Claim[] = []
 
 const allowedOrigins = [
   'https://par3-challenge-app-tailwind.vercel.app',
-  'https://par3-challenge-app-tailwind-git-main-dev-booths-projects.vercel.app',
+  'https://par3-challenge-app-tailwind-gpoj509m0-dev-booths-projects.vercel.app',
   'https://par3-admin1.vercel.app',
-  // Add other Vercel preview or production domains as needed
 ];
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {

@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
-    // Preflight request, just respond with 200
+    // Preflight request: respond with 200 and no body
     res.status(200).end();
     return;
   }

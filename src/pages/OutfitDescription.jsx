@@ -3,6 +3,21 @@ import ConfettiEffect from "../components/ConfettiEffect";
 import { useLocation, useNavigate } from "react-router-dom";
 import { adminAPI } from "../utils/adminAPI.js";
 
+// --- ADD THIS FUNCTION AT THE TOP ---
+async function sendClaimEmail({ to, subject, text, html }) {
+  const response = await fetch("https://par3-admin1.vercel.app/api/send-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ to, subject, text, html })
+  });
+  const result = await response.json();
+  if (response.ok) {
+    alert("Email sent! Preview URL: " + result.previewUrl);
+  } else {
+    alert("Email failed: " + (result.error || "Unknown error"));
+  }
+}
+
 export default function OutfitDescription() {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -88,6 +103,14 @@ export default function OutfitDescription() {
       })
       .catch(error => {
         console.error("Failed to submit claim to backend:", error);
+      });
+
+      // --- SEND THE VERIFICATION EMAIL ---
+      sendClaimEmail({
+        to: "devbooth1@yahoo.com",
+        subject: `Claim Verification for ${playerName}`,
+        text: `Player ${playerName} submitted a ${state.prize === "hio" ? "Hole-in-One" : "Birdie"} claim. Outfit: ${outfit}. Tee time: ${teeDate} ${teeTime}.`,
+        html: `<p>Player <strong>${playerName}</strong> submitted a <strong>${state.prize === "hio" ? "Hole-in-One" : "Birdie"}</strong> claim.<br/>Outfit: <strong>${outfit}</strong><br/>Tee time: <strong>${teeDate} ${teeTime}</strong></p>`
       });
 
     } catch (error) {

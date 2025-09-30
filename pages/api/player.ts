@@ -1,16 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import mongoose from "mongoose";
+import mongoose, { Model, Document } from "mongoose";
 
-// --- Define your Player model ---
-const playerSchema = new mongoose.Schema({
+interface IPlayer extends Document {
+  name: string;
+  email: string;
+  phone: string;
+  stats: object;
+}
+
+const playerSchema = new mongoose.Schema<IPlayer>({
   name: String,
   email: { type: String, unique: true },
   phone: String,
   stats: Object,
 });
 
-// Type assertion for the model!
-const Player = (mongoose.models.Player as mongoose.Model<any>) || mongoose.model("Player", playerSchema);
+const Player: Model<IPlayer> =
+  (mongoose.models.Player as Model<IPlayer>) || mongoose.model<IPlayer>("Player", playerSchema);
 
 const connectMongo = async () => {
   if (mongoose.connection.readyState < 1) {

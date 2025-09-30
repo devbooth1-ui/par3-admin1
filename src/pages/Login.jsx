@@ -30,19 +30,16 @@ export default function Login() {
     setName(formattedName);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
     // Check terms agreement for new players
     if (!agreeToTerms) {
       alert("Please agree to the terms and conditions to continue.");
       return;
     }
-    
     localStorage.setItem("playerName", name);
     localStorage.setItem("playerEmail", email);
     localStorage.setItem("playerPhone", phone);
-
     // Check if playerStats already exists (returning player)
     const existingStats = localStorage.getItem("playerStats");
     if (!existingStats) {
@@ -54,9 +51,28 @@ export default function Login() {
         totalPoints: 50,
         lastReward: "Welcome Bonus",
         lastDate: new Date().toLocaleDateString(),
-        holeInOneQualified: false
+        holeInOneQualified: false,
+        tournamentQualified: false,
+        tournamentRegistered: false,
       };
       localStorage.setItem("playerStats", JSON.stringify(initialStats));
+      // --- SYNC TO BACKEND ---
+      try {
+        const res = await fetch("https://par3-admin1.vercel.app/api/players", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            email,
+            phone,
+            stats: initialStats,
+          }),
+        });
+        const data = await res.json();
+        console.log("Synced player to admin backend:", data);
+      } catch (error) {
+        console.error("Error syncing player to admin backend:", error);
+      }
       navigate("/awards");
     } else {
       // Returning player: go to play page
@@ -135,52 +151,4 @@ export default function Login() {
             placeholder="Phone"
             value={phone}
             onChange={e => setPhone(e.target.value)}
-            className="w-full rounded px-2 py-2 border border-lime-300 text-gray-800 placeholder-gray-700 bg-lime-50 focus:outline-none focus:ring-2 focus:ring-lime-300 text-base"
-            maxLength={16}
-            pattern="[0-9\-\+\(\) ]*"
-            required
-          />
-          
-          {/* Terms and Conditions Checkbox */}
-          <div className="w-full mt-3 mb-2">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={agreeToTerms}
-                onChange={(e) => setAgreeToTerms(e.target.checked)}
-                className="mt-1 w-4 h-4 text-lime-600 border-lime-300 rounded focus:ring-lime-500"
-                required
-              />
-              <div className="text-sm text-white leading-relaxed">
-                <span>I agree to the </span>
-                <button 
-                  type="button"
-                  className="underline text-lime-300 hover:text-lime-200"
-                  onClick={() => navigate('/terms')}
-                >
-                  terms and conditions
-                </button>
-                <span> including AI shot verification and recording for prizes and keepsakes.</span>
-              </div>
-            </label>
-          </div>
-          
-          <button
-            type="submit"
-            className={`text-white text-lg font-bold py-2 px-6 rounded-full shadow-lg transition w-full mt-1 flex flex-col items-center gap-1 ${
-              agreeToTerms 
-                ? "bg-lime-700 hover:bg-lime-800" 
-                : "bg-gray-500 cursor-not-allowed"
-            }`}
-            disabled={!agreeToTerms}
-          >
-            <span className="flex justify-center items-center gap-1">
-              <span className="text-lime-100">APPROACH SHOT</span>
-            </span>
-            <span className="text-xs text-lime-300 mt-1 font-normal">click here</span>
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
+            className="w-full rounded px-2 py-2 border border-lime-300 text-gray-800 placeholder-gray-700 bg-lime-50 focus:outline-none focus:ring

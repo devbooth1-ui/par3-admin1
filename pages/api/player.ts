@@ -9,7 +9,8 @@ const playerSchema = new mongoose.Schema({
   stats: Object,
 });
 
-const Player = mongoose.models.Player || mongoose.model("Player", playerSchema);
+// Type assertion for the model!
+const Player = (mongoose.models.Player as mongoose.Model<any>) || mongoose.model("Player", playerSchema);
 
 const connectMongo = async () => {
   if (mongoose.connection.readyState < 1) {
@@ -29,14 +30,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { email },
       { name, phone, stats },
       { upsert: true, new: true, setDefaultsOnInsert: true }
-    ).exec();
+    );
 
     return res.status(200).json(player);
   }
 
   if (req.method === "GET") {
     // List all players for admin view
-    const players = await Player.find({}).exec();
+    const players = await Player.find({});
     return res.status(200).json(players);
   }
 

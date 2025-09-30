@@ -29,14 +29,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { email },
       { name, phone, stats },
       { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    ).exec();
 
     return res.status(200).json(player);
   }
 
   if (req.method === "GET") {
     // List all players for admin view
-    const players = await Player.find({});
+    const players = await Player.find({}).exec();
     return res.status(200).json(players);
   }
 

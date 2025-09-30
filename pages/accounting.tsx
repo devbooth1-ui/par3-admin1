@@ -10,6 +10,7 @@ const DUMMY_TRANSACTIONS = [
         amount: 25.0,
         status: 'completed',
         type: 'income',
+        category: 'daily-play',
     },
     {
         id: 2,
@@ -19,6 +20,7 @@ const DUMMY_TRANSACTIONS = [
         amount: 50.0,
         status: 'completed',
         type: 'income',
+        category: 'shootout-tournament',
     },
     {
         id: 3,
@@ -28,6 +30,7 @@ const DUMMY_TRANSACTIONS = [
         amount: 150.0,
         status: 'completed',
         type: 'expense',
+        category: 'course',
     },
     {
         id: 4,
@@ -37,6 +40,7 @@ const DUMMY_TRANSACTIONS = [
         amount: 75.0,
         status: 'pending',
         type: 'income',
+        category: 'daily-play',
     },
     {
         id: 5,
@@ -46,7 +50,26 @@ const DUMMY_TRANSACTIONS = [
         amount: 100.0,
         status: 'completed',
         type: 'income',
+        category: 'daily-play',
     },
+    {
+        id: 6,
+        date: '2024-03-09',
+        customer: 'Golf Digest',
+        description: 'Marketing Sponsorship',
+        amount: 500.0,
+        status: 'completed',
+        type: 'income',
+        category: 'marketing',
+    },
+];
+
+const CATEGORY_OPTIONS = [
+    { value: 'all', label: 'All Categories' },
+    { value: 'shootout-tournament', label: 'Shootout Tournament' },
+    { value: 'daily-play', label: 'Daily Play' },
+    { value: 'course', label: 'Course Revenue/Expense' },
+    { value: 'marketing', label: 'Marketing Revenue' },
 ];
 
 function getStatusStyles(status) {
@@ -75,9 +98,12 @@ function getTypeLabel(type) {
 export default function Accounting() {
     const [transactionType, setTransactionType] = useState('all');
     const [dateRange, setDateRange] = useState('thisMonth');
+    const [category, setCategory] = useState('all');
 
     const filteredTransactions = DUMMY_TRANSACTIONS.filter(
-        (t) => transactionType === 'all' || t.type === transactionType
+        (t) =>
+            (transactionType === 'all' || t.type === transactionType) &&
+            (category === 'all' || t.category === category)
     );
 
     const totalIncome = filteredTransactions
@@ -163,6 +189,17 @@ export default function Accounting() {
                                 <option value="income">Income Only</option>
                                 <option value="expense">Expenses Only</option>
                             </select>
+                            <select
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value)}
+                                className="px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-400 bg-gray-50"
+                            >
+                                {CATEGORY_OPTIONS.map((c) => (
+                                    <option key={c.value} value={c.value}>
+                                        {c.label}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <div className="flex gap-3">
                             <button className="px-5 py-2 rounded-md bg-green-600 text-white font-semibold shadow hover:bg-green-700 transition">
@@ -190,6 +227,7 @@ export default function Accounting() {
                                     <Th>Customer/Vendor</Th>
                                     <Th>Description</Th>
                                     <Th>Type</Th>
+                                    <Th>Category</Th>
                                     <Th>Amount</Th>
                                     <Th>Status</Th>
                                     <Th>Actions</Th>
@@ -211,6 +249,11 @@ export default function Accounting() {
                                         <Td className="font-medium">{t.customer}</Td>
                                         <Td>{t.description}</Td>
                                         <Td>{getTypeLabel(t.type)}</Td>
+                                        <Td>
+                                            <span className="px-2 py-1 rounded bg-gray-100 text-xs font-bold">
+                                                {CATEGORY_OPTIONS.find(c => c.value === t.category)?.label || t.category}
+                                            </span>
+                                        </Td>
                                         <Td className="font-bold">
                                             ${t.amount.toFixed(2)}
                                         </Td>

@@ -24,14 +24,16 @@ const connectMongo = async () => {
   }
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // --- CORS headers ---
+function setCorsHeaders(res: NextApiResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  setCorsHeaders(res);
 
   if (req.method === "OPTIONS") {
-    // Preflight request: respond with 200 and no body
     res.status(200).end();
     return;
   }
@@ -49,12 +51,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
+    setCorsHeaders(res); // Ensure headers on all responses
     return res.status(200).json(player);
   }
 
   if (req.method === "GET") {
-    // List all players for admin view
     const players = await Player.find({});
+    setCorsHeaders(res); // Ensure headers on all responses
     return res.status(200).json(players);
   }
 

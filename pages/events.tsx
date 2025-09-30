@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AdminLayout from '../components/AdminLayout';
-
 
 interface Event {
     id: number;
@@ -15,8 +14,18 @@ interface Event {
     type: 'tournament' | 'lesson' | 'practice' | 'special';
 }
 
+type PlayerStats = {
+    totalPoints?: number;
+};
+type Player = {
+    _id: string;
+    name: string;
+    email: string;
+    stats?: PlayerStats;
+};
+
 export default function Events() {
-    const [events] = useState([
+    const [events] = useState<Event[]>([
         {
             id: 1,
             title: 'Spring Tournament',
@@ -71,6 +80,71 @@ export default function Events() {
     const [selectedStatus, setSelectedStatus] = useState('all');
     const [selectedType, setSelectedType] = useState('all');
 
+    // --- Bulk Email Feature ---
+    const [players, setPlayers] = useState<Player[]>([]);
+    const [loadingPlayers, setLoadingPlayers] = useState(true);
+    const [sendingBulk, setSendingBulk] = useState(false);
+    const [bulkError, setBulkError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetch('/api/players')
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch players');
+                return res.json();
+            })
+            .then(data => {
+                setPlayers(data);
+                setLoadingPlayers(false);
+            })
+            .catch(() => {
+                setBulkError('Could not load players');
+                setLoadingPlayers(false);
+            });
+    }, []);
+
+    async function sendEventEmailToAll() {
+        if (!window.confirm("Send this event email to ALL players?")) return;
+        setSendingBulk(true);
+        for (const player of players) {
+            const points = player.stats?.totalPoints ?? 0;
+            await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: player.email,
+                    subject: "You're Invited: Special Par3 Event!",
+                    text: `
+Hi ${player.name},
+
+You have ${points} points so far!
+
+Let's play toward the $1 Million Dollar Shootout!
+
+See tournament details: https://par3-admin1.vercel.app/tournament-details?player=${player._id}
+Find your nearest course: https://par3-admin1.vercel.app/courses?player=${player._id}
+
+Don't miss this special event!
+                    `,
+                    html: `
+<h2>Hi ${player.name},</h2>
+<p>You have <strong>${points}</strong> points so far!</p>
+<p>Let's play toward the <strong>$1 Million Dollar Shootout!</strong></p>
+<p>
+  <a href="https://par3-admin1.vercel.app/tournament-details?player=${player._id}" style="background:#048e27;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">Tournament Details</a>
+</p>
+<p>
+  <a href="https://par3-admin1.vercel.app/courses?player=${player._id}" style="background:#0d6efd;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">Find Your Nearest Course</a>
+</p>
+<br>
+<p>Don't miss this special event!</p>
+                    `
+                })
+            });
+        }
+        setSendingBulk(false);
+        alert("Special event emails sent to all players!");
+    }
+
     const filteredEvents = events.filter(event => {
         const matchesStatus = selectedStatus === 'all' || event.status === selectedStatus;
         const matchesType = selectedType === 'all' || event.type === selectedType;
@@ -122,6 +196,31 @@ export default function Events() {
                     <div className="mb-8">
                         <h2 className="text-3xl font-bold text-gray-900">Event Management</h2>
                         <p className="text-gray-600">Create and manage tournaments, lessons, and special events</p>
+                    </div>
+
+                    {/* Bulk Email Button */}
+                    <div className="mb-8">
+                        <button
+                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded font-bold"
+                            onClick={sendEventEmailToAll}
+                            disabled={sendingBulk || loadingPlayers || players.length === 0}
+                        >
+                            {sendingBulk ? "Sending..." : "Send Special Event Email to All Players"}
+                        </button>
+                        {loadingPlayers && <div className="text-gray-600 mt-2">Loading player list...</div>}
+                        {bulkError && <div className="text-red-600 mt-2">{bulkError}</div>}
+                        {!loadingPlayers && players.length > 0 && (
+                            <div className="mt-2 text-sm text-gray-700">
+                                Players who will receive the email:
+                                <ul>
+                                    {players.map(player => (
+                                        <li key={player._id}>
+                                            {player.name} ({player.email}) — Points: {player.stats?.totalPoints ?? 0}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
 
                     {/* Stats Cards */}

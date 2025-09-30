@@ -25,7 +25,7 @@ const connectMongo = async () => {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // --- CORS headers ---
+  // CORS headers for EVERY request
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -41,6 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { name, email, phone, stats } = req.body;
     if (!email) return res.status(400).json({ error: "Email required" });
 
+    // Upsert player info by email
     const player = await Player.findOneAndUpdate(
       { email },
       { name, phone, stats },

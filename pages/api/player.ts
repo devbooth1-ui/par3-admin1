@@ -26,14 +26,15 @@ const connectMongo = async () => {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // --- CORS headers ---
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
   if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    // Preflight request, just respond with 200
     res.status(200).end();
     return;
   }
-  res.setHeader("Access-Control-Allow-Origin", "*");
 
   await connectMongo();
 

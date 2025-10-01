@@ -1,38 +1,36 @@
 {
-  "name": "par3-admin1",
+  "name": "admin1-backend",
   "version": "1.0.0",
-  "private": true,
+  "description": "Par 3 Challenge Admin Backend API",
+  "main": "src/accounting.ts",
   "scripts": {
-    "dev": "next dev --turbo",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "ts-node src/accounting.ts",
+    "dev": "nodemon --watch src --exec ts-node src/accounting.ts",
+    "build": "tsc",
+    "lint": "eslint . --ext .ts"
   },
+  "keywords": [
+    "express",
+    "typescript",
+    "accounting",
+    "api"
+  ],
+  "author": "devbooth1-ui",
+  "license": "MIT",
   "dependencies": {
-    "axios": "^1.12.2",
-    "cookie": "^1.0.2",
-    "js-cookie": "^3.0.5",
-    "leaflet": "^1.9.4",
-    "mongodb": "^6.20.0",
-    "mongoose": "^8.18.2",
-    "next": "14.2.32",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-icons": "^5.5.0",
-    "nodemailer": "^6.9.4"
+    "express": "^4.18.2",
+    "bcrypt": "^5.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "cors": "^2.8.5"
   },
   "devDependencies": {
-    "@types/cookie": "^0.6.0",
-    "@types/js-cookie": "^3.0.6",
-    "@types/leaflet": "^1.9.20",
-    "@types/node": "20.19.14",
-    "@types/react": "18.3.24",
-    "@types/react-dom": "^18.3.1",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "14.2.32",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.15",
-    "typescript": "5.9.2"
+    "@types/express": "^4.17.21",
+    "@types/bcrypt": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/cors": "^2.8.13",
+    "typescript": "^5.2.2",
+    "ts-node": "^10.9.1",
+    "nodemon": "^2.0.22",
+    "eslint": "^8.51.0"
   }
 }

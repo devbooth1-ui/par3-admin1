@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import ConfettiEffect from "../components/ConfettiEffect";
 import { useLocation, useNavigate } from "react-router-dom";
 
+// Submit claim to backend/email
 async function sendClaimEmail(claimData) {
   const response = await fetch("https://par3-admin1.vercel.app/api/send-email", {
     method: "POST",
@@ -25,6 +26,8 @@ export default function OutfitDescription() {
 
   // Prefer playerName from navigation state, fallback to localStorage
   const playerName = (state && state.playerName) || localStorage.getItem("playerName") || "Player";
+  const playerEmail = (state && state.playerEmail) || localStorage.getItem("playerEmail") || "";
+  const playerPhone = localStorage.getItem("playerPhone") || "";
   const firstName = playerName.split(" ")[0];
   const capitalizedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
 
@@ -37,15 +40,15 @@ export default function OutfitDescription() {
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    // Compose claimData with fixed fields!
+    // Compose claimData with fields from form
     const claimData = {
       claimType: state.prize === "hio" ? "hole-in-one" : "birdie",
-      playerName: localStorage.getItem("playerName") || "",
-      playerEmail: localStorage.getItem("playerEmail") || "",
-      playerPhone: localStorage.getItem("playerPhone") || "",
-      outfitDescription: outfit || "",
-      teeDate: teeDate || "",
-      teeTime: teeTime || ""
+      playerName,
+      playerEmail,
+      playerPhone,
+      outfitDescription: outfit,
+      teeDate,
+      teeTime,
     };
 
     try {

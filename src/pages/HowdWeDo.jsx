@@ -8,7 +8,6 @@ export default function HowdWeDo() {
   const [showVideoOrder, setShowVideoOrder] = useState(false);
   const [videoOrderData, setVideoOrderData] = useState(null);
 
-  // Check for video order query param and data
   useEffect(() => {
     const videoOrderParam = searchParams.get('videoOrder');
     if (videoOrderParam === 'true') {
@@ -20,32 +19,18 @@ export default function HowdWeDo() {
     }
   }, [searchParams]);
 
-  // Developer toggle for new player flow
-  const clearPlayerData = () => {
-    localStorage.removeItem("playerName");
-    localStorage.removeItem("playerEmail");
-    localStorage.removeItem("playerStats");
-    localStorage.removeItem("tournamentRegistration");
-    localStorage.removeItem("videoOrder");
-    window.location.reload();
-  };
-
-  // Defensive: fallback for missing/corrupt localStorage
   let playerName = "Player";
   let currentStats = {};
   try {
     playerName = localStorage.getItem("playerName") || "Player";
     currentStats = JSON.parse(localStorage.getItem("playerStats") || "{}") || {};
   } catch (e) {
-    console.error("Error reading player data from localStorage", e);
     playerName = "Player";
     currentStats = {};
   }
 
   const recordScore = async (scoreType, reward, points) => {
-    // Defensive: ensure currentStats is an object
     const safeStats = typeof currentStats === 'object' && currentStats !== null ? currentStats : {};
-    // Update player stats
     const updatedStats = {
       ...safeStats,
       lastRound: scoreType,
@@ -57,39 +42,31 @@ export default function HowdWeDo() {
     };
     localStorage.setItem("playerStats", JSON.stringify(updatedStats));
 
-    // If it's a birdie or hole-in-one, submit to admin portal for verification
+    const playerEmail = localStorage.getItem("playerEmail") || "";
+    const paymentMethod = localStorage.getItem("lastPaymentMethod") || "card";
+    const nameparts = playerName.split(" ");
+    const firstName = nameparts[0] || "Player";
+    const lastName = nameparts.slice(1).join(" ") || "";
+
+    // Birdie/Hole-in-One: go to /verify, pass all needed info for verification
     if (scoreType === "Birdie" || scoreType === "Hole-in-One") {
-      const playerEmail = localStorage.getItem("playerEmail") || "";
-      const paymentMethod = localStorage.getItem("lastPaymentMethod") || "card"; // Get original payment method
-      const nameparts = playerName.split(" ");
-      const firstName = nameparts[0] || "Player";
-      const lastName = nameparts.slice(1).join(" ") || "";
-
-      const playerData = {
-        firstName,
-        lastName,
-        email: playerEmail,
-        phone: "", // You can add phone collection in your app later
-      };
-
-      let claimResult;
-      if (scoreType === "Hole-in-One") {
-        claimResult = await adminAPI.submitHoleInOneClaim(playerData, paymentMethod);
-      } else {
-        claimResult = await adminAPI.submitBirdieClaim(playerData);
-      }
-
-      console.log("Admin portal response:", claimResult);
+      navigate("/verify", {
+        state: {
+          prize: scoreType === "Hole-in-One" ? "hio" : "birdie",
+          reward,
+          points,
+          playerName,
+          playerEmail,
+          firstName,
+          lastName,
+          paymentMethod
+        }
+      });
+      return;
     }
 
-    // Navigate to appropriate page
-    if (scoreType === "Hole-in-One") {
-      navigate("/verify", { state: { prize: "hio", reward, points, playerName } });
-    } else if (scoreType === "Birdie") {
-      navigate("/verify", { state: { prize: "birdie", reward, points, playerName } });
-    } else {
-      navigate("/myscorecard", { state: { prize: null, scoreType, points } });
-    }
+    // Par/Bogey: normal submit and route
+    navigate("/myscorecard", { state: { prize: null, scoreType, points } });
   };
 
   const getScoreValue = (scoreType) => {
@@ -115,7 +92,6 @@ export default function HowdWeDo() {
       <p className="text-center text-white/90 mb-6 text-base sm:text-lg drop-shadow">
         <span className="font-bold text-white">Click On It...</span>
       </p>
-
       {/* Video Order Confirmation */}
       {showVideoOrder && videoOrderData && (
         <div className="w-full max-w-md mb-6 bg-purple-600/90 border-2 border-purple-400 rounded-xl p-4">
@@ -129,7 +105,6 @@ export default function HowdWeDo() {
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  // Confirm order
                   localStorage.setItem('videoOrder', JSON.stringify({
                     ...videoOrderData,
                     status: 'confirmed',
@@ -157,7 +132,8 @@ export default function HowdWeDo() {
       )}
 
       <div className="flex flex-col gap-2 w-full max-w-md">
-        <button className="w-full py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all shadow text-base flex flex-col items-center" onClick={() => recordScore("Hole-in-One", "$1,000 CASH* + Instant Qualification for the $1 Million Tournament", 1000)}>
+        <button className="w-full py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all shadow text-base flex flex-col items-center"
+          onClick={() => recordScore("Hole-in-One", "$1,000 CASH* + Instant Qualification for the $1 Million Tournament", 1000)}>
           🏆 HOLE-IN-WON!
           <div className="text-xs">$1,000 CASH*<br />Instant Qualification for the $1 Million Tournament</div>
         </button>

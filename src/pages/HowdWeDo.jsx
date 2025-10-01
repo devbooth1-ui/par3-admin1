@@ -31,7 +31,7 @@ export default function HowdWeDo() {
     currentStats = {};
   }
 
-  // Birdie/Hole-in-One handler: always navigate to /verify!
+  // Birdie/Hole-in-One handler: ONLY navigates to /verify, never submits claim here
   const handleBirdieOrHioClick = (scoreType, reward, points) => {
     navigate("/verify", {
       state: {

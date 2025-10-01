@@ -21,8 +21,6 @@ export default function OutfitDescription() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const [outfit, setOutfit] = useState("");
-  const [teeDate, setTeeDate] = useState("");
-  const [teeTime, setTeeTime] = useState("");
 
   // Prefer playerName from navigation state, fallback to localStorage
   const playerName = (state && state.playerName) || localStorage.getItem("playerName") || "Player";
@@ -40,15 +38,13 @@ export default function OutfitDescription() {
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    // Compose claimData with fields from form
+    // Compose claimData with fields from form (no teeDate, no teeTime)
     const claimData = {
       claimType: state.prize === "hio" ? "hole-in-one" : "birdie",
       playerName,
       playerEmail,
       playerPhone,
-      outfitDescription: outfit,
-      teeDate,
-      teeTime,
+      outfitDescription: outfit
     };
 
     try {
@@ -59,7 +55,7 @@ export default function OutfitDescription() {
     }
 
     navigate("/myscorecard", {
-      state: { prize: state.prize, outfit, teeTime: `${teeDate} ${teeTime}` },
+      state: { prize: state.prize, outfit },
     });
   };
 
@@ -115,36 +111,6 @@ export default function OutfitDescription() {
               style={{ fontSize: 16 }}
             />
           </div>
-          {/* Date and Time */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label className="block text-xs sm:text-sm font-semibold text-slate-700">
-                Date of Achievement
-              </label>
-              <input
-                type="date"
-                className="w-full border-2 border-emerald-200 rounded-lg p-2 sm:p-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-[16px]"
-                value={teeDate}
-                onChange={(e) => setTeeDate(e.target.value)}
-                required
-                style={{ fontSize: 16 }}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="block text-xs sm:text-sm font-semibold text-slate-700">
-                Approximate Tee Time
-              </label>
-              <input
-                type="time"
-                className="w-full border-2 border-emerald-200 rounded-lg p-2 sm:p-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-[16px]"
-                value={teeTime}
-                onChange={(e) => setTeeTime(e.target.value)}
-                required
-                style={{ fontSize: 16 }}
-              />
-            </div>
-          </div>
-          {/* Verification info message */}
           <div className="my-3 text-center text-xs sm:text-sm text-slate-700 font-medium">
             Awards subject to verification. Hole-in-Won confirmation status will be emailed within 24 hours. *Award will be paid back to the method of payment used.
           </div>

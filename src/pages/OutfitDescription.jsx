@@ -20,9 +20,13 @@ export default function OutfitDescription() {
 
   useEffect(() => {
     if (!state || !state.prize) navigate("/howd-we-do", { replace: true });
+    // Debug: log state for troubleshooting blank page
+    console.log("Location state:", state);
   }, [state, navigate]);
 
-  if (!state || !state.prize) return null;
+  if (!state || !state.prize) {
+    return <div style={{color: "red"}}>Error: Missing claim info. Try again.</div>;
+  }
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -36,13 +40,13 @@ export default function OutfitDescription() {
       points: state.points || 0,
       reward: state.reward || "",
       outfitDescription: outfit || "",
+      teeTime: combinedTeeTime,
       teeDate: teeDate || "",
-      teeTime: teeTime || "",
       submittedAt: new Date().toISOString(),
     };
     try {
       const result = await sendClaim(claimData);
-      if (result.ok) {
+      if (result.ok || result.id) {
         alert("✅ Claim submitted for verification!");
       } else {
         alert("❌ There was a problem: " + (result.error || "Unknown error"));
@@ -131,23 +135,4 @@ export default function OutfitDescription() {
                 style={{ fontSize: 16 }}
               />
             </div>
-          </div>
-          <div className="my-3 text-center text-xs sm:text-sm text-slate-700 font-medium">
-            Awards subject to verification. Hole-in-Won confirmation status will be emailed within 24 hours. *Award will be paid back to the method of payment used.
-          </div>
-          <button
-            type="submit"
-            className="w-full mt-2 px-4 py-3 sm:px-6 sm:py-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg text-base sm:text-lg"
-          >
-            Submit for Verification
-          </button>
-        </form>
-        <div className="mt-3 text-center pb-2">
-          <p className="text-xs text-slate-500">
-            🔒 Your information is secure and used only for prize verification
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
+

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import ConfettiEffect from "../components/ConfettiEffect";
 import { useLocation, useNavigate } from "react-router-dom";
 
 async function sendClaim(claimData) {
@@ -19,13 +18,20 @@ export default function OutfitDescription() {
   const [teeTime, setTeeTime] = useState("");
 
   useEffect(() => {
-    if (!state || !state.prize) navigate("/howd-we-do", { replace: true });
-    // Debug: log state for troubleshooting blank page
     console.log("Location state:", state);
+    if (!state || !state.prize) {
+      navigate("/howd-we-do", { replace: true });
+    }
   }, [state, navigate]);
 
   if (!state || !state.prize) {
-    return <div style={{color: "red"}}>Error: Missing claim info. Try again.</div>;
+    return (
+      <div style={{color: "red", padding: 40}}>
+        <h2>Error: Missing claim info. Try again.</h2>
+        <pre>{JSON.stringify(state, null, 2)}</pre>
+        <p>Did you refresh, or use the browser Back button? Always use the claim buttons.</p>
+      </div>
+    );
   }
 
   const onSubmit = async (e) => {
@@ -76,7 +82,6 @@ export default function OutfitDescription() {
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {(state.prize === "hio" || state.prize === "birdie") && <ConfettiEffect duration={3000} />}
       <div className="absolute inset-0 bg-gradient-to-br from-green-900/40 via-emerald-800/30 to-lime-700/40"></div>
       <div className="relative z-10 w-full max-w-sm sm:max-w-md bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 sm:p-6 border border-emerald-200 mx-auto my-4 flex flex-col justify-between min-h-[80svh] overflow-y-auto">
         <div className="text-center mb-4">
@@ -135,4 +140,23 @@ export default function OutfitDescription() {
                 style={{ fontSize: 16 }}
               />
             </div>
-
+          </div>
+          <div className="my-3 text-center text-xs sm:text-sm text-slate-700 font-medium">
+            Awards subject to verification. Hole-in-Won confirmation status will be emailed within 24 hours. *Award will be paid back to the method of payment used.
+          </div>
+          <button
+            type="submit"
+            className="w-full mt-2 px-4 py-3 sm:px-6 sm:py-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg text-base sm:text-lg"
+          >
+            Submit for Verification
+          </button>
+        </form>
+        <div className="mt-3 text-center pb-2">
+          <p className="text-xs text-slate-500">
+            🔒 Your information is secure and used only for prize verification
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

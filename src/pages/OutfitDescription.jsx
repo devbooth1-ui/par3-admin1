@@ -3,18 +3,18 @@ import ConfettiEffect from "../components/ConfettiEffect";
 import { useLocation, useNavigate } from "react-router-dom";
 import { adminAPI } from "../utils/adminAPI.js";
 
-// --- ADD THIS FUNCTION AT THE TOP ---
-async function sendClaimEmail({ to, subject, text, html }) {
+// --- FIXED CLAIM EMAIL FUNCTION ---
+async function sendClaimEmail(claimData) {
   const response = await fetch("https://par3-admin1.vercel.app/api/send-email", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ to, subject, text, html })
+    body: JSON.stringify(claimData)
   });
   const result = await response.json();
   if (response.ok) {
-    alert("Email sent! Preview URL: " + result.previewUrl);
+    alert("Claim sent! Response: " + JSON.stringify(result));
   } else {
-    alert("Email failed: " + (result.error || "Unknown error"));
+    alert("Claim failed: " + (result.error || "Unknown error"));
   }
 }
 
@@ -54,7 +54,7 @@ export default function OutfitDescription() {
       firstName,
       lastName,
       email: playerEmail,
-      phone: "", // You can add phone collection in your app later
+      phone: "",
     };
 
     try {
@@ -105,12 +105,13 @@ export default function OutfitDescription() {
         console.error("Failed to submit claim to backend:", error);
       });
 
-      // --- SEND THE VERIFICATION EMAIL ---
+      // --- SEND THE CLAIM TO EMAIL VERIFICATION ENDPOINT (FIXED FIELDS!) ---
       sendClaimEmail({
-        to: "devbooth1@yahoo.com",
-        subject: `Claim Verification for ${playerName}`,
-        text: `Player ${playerName} submitted a ${state.prize === "hio" ? "Hole-in-One" : "Birdie"} claim. Outfit: ${outfit}. Tee time: ${teeDate} ${teeTime}.`,
-        html: `<p>Player <strong>${playerName}</strong> submitted a <strong>${state.prize === "hio" ? "Hole-in-One" : "Birdie"}</strong> claim.<br/>Outfit: <strong>${outfit}</strong><br/>Tee time: <strong>${teeDate} ${teeTime}</strong></p>`
+        claimType: state.prize === "hio" ? "hole-in-one" : "birdie",
+        playerName: localStorage.getItem("playerName") || "",
+        playerEmail: localStorage.getItem("playerEmail") || "",
+        playerPhone: localStorage.getItem("playerPhone") || "",
+        outfitDescription: outfit || ""
       });
 
     } catch (error) {
@@ -157,14 +158,11 @@ export default function OutfitDescription() {
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Confetti for Birdie or Hole-in-Won */}
       {(state.prize === "hio" || state.prize === "birdie") && <ConfettiEffect duration={3000} />}
 
-      {/* Premium overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-900/40 via-emerald-800/30 to-lime-700/40"></div>
 
       <div className="relative z-10 w-full max-w-sm sm:max-w-md bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 sm:p-6 border border-emerald-200 mx-auto my-4 flex flex-col justify-between min-h-[80svh] overflow-y-auto">
-        {/* Congratulations Header */}
         <div className="text-center mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-green-600 to-lime-600 mb-1">
             Congratulations {capitalizedFirstName}!
@@ -181,7 +179,6 @@ export default function OutfitDescription() {
         </div>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-3 flex-1 justify-between">
-          {/* Outfit Description */}
           <div className="space-y-1">
             <label className="block text-xs sm:text-sm font-semibold text-slate-700">
               Outfit Description for Verification
@@ -197,7 +194,6 @@ export default function OutfitDescription() {
             />
           </div>
 
-          {/* Date and Time */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="space-y-1">
               <label className="block text-xs sm:text-sm font-semibold text-slate-700">
@@ -226,7 +222,6 @@ export default function OutfitDescription() {
               />
             </div>
           </div>
-          {/* Verification info message */}
           <div className="my-3 text-center text-xs sm:text-sm text-slate-700 font-medium">
             Awards subject to verification. Hole-in-Won confirmation status will be emailed within 24 hours. *Award will be paid back to the method of payment used.
           </div>
@@ -238,7 +233,6 @@ export default function OutfitDescription() {
           </button>
         </form>
 
-        {/* Footer */}
         <div className="mt-3 text-center pb-2">
           <p className="text-xs text-slate-500">
             🔒 Your information is secure and used only for prize verification

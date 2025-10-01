@@ -1,39 +1,66 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function OutfitDescription() {
-  const { state } = useLocation();
   const navigate = useNavigate();
   const [outfit, setOutfit] = useState("");
   const [teeDate, setTeeDate] = useState("");
   const [teeTime, setTeeTime] = useState("");
+  const [claimInfo, setClaimInfo] = useState(null);
 
   useEffect(() => {
-    console.log("Location state:", state);
-    if (!state || !state.prize) {
-      navigate("/howd-we-do", { replace: true });
-    }
-  }, [state, navigate]);
+    const info = localStorage.getItem("claimInfo");
+    setClaimInfo(info ? JSON.parse(info) : null);
+  }, []);
 
-  if (!state || !state.prize) {
+  if (!claimInfo || !claimInfo.prize) {
     return (
       <div style={{ color: "red", padding: 40 }}>
         <h2>Error: Missing claim info. Try again.</h2>
-        <pre>{JSON.stringify(state, null, 2)}</pre>
-        <p>Did you refresh or use the browser Back button? Always use the claim buttons.</p>
+        <pre>{JSON.stringify(claimInfo, null, 2)}</pre>
+        <p>Return to HowdWeDo and click Birdie or Hole-in-One.</p>
       </div>
     );
   }
 
+  function handleSubmit(e) {
+    e.preventDefault();
+    // submit data to your backend here
+    alert(`Submitted: ${JSON.stringify({
+      ...claimInfo,
+      outfit,
+      teeDate,
+      teeTime
+    }, null, 2)}`);
+    // Clear claimInfo after submit
+    localStorage.removeItem("claimInfo");
+    navigate("/myscorecard");
+  }
+
   return (
-    <div>
+    <form onSubmit={handleSubmit}>
       <h2>Outfit Description Page</h2>
-      <p>Prize: {state.prize}</p>
-      <p>Player Name: {state.playerName}</p>
-      <input value={outfit} onChange={e => setOutfit(e.target.value)} placeholder="Outfit" />
-      <input type="date" value={teeDate} onChange={e => setTeeDate(e.target.value)} />
-      <input type="time" value={teeTime} onChange={e => setTeeTime(e.target.value)} />
-      {/* ...rest of your form ... */}
-    </div>
+      <p>Prize: {claimInfo.prize}</p>
+      <p>Player Name: {claimInfo.playerName}</p>
+      <input
+        value={outfit}
+        onChange={e => setOutfit(e.target.value)}
+        placeholder="Outfit"
+        required
+      />
+      <input
+        type="date"
+        value={teeDate}
+        onChange={e => setTeeDate(e.target.value)}
+        required
+      />
+      <input
+        type="time"
+        value={teeTime}
+        onChange={e => setTeeTime(e.target.value)}
+        required
+      />
+      <button type="submit">Submit</button>
+    </form>
   );
 }

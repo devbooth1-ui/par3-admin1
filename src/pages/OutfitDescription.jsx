@@ -17,12 +17,14 @@ export default function OutfitDescription() {
     );
   }
 
+  // Form state
   const [outfitDescription, setOutfitDescription] = useState("");
   const [teeDate, setTeeDate] = useState("");
   const [teeTime, setTeeTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Submit handler (does NOT run on mount, only on button click)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);

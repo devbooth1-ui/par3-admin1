@@ -1,7 +1,20 @@
 import React, { useEffect, useState } from "react";
 import ConfettiEffect from "../components/ConfettiEffect";
 import { useLocation, useNavigate } from "react-router-dom";
-import { notifyCompany } from "../assets/utils/notificationService.js";
+
+async function sendClaimEmail(claimData) {
+  const response = await fetch("https://par3-admin1.vercel.app/api/send-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(claimData)
+  });
+  const result = await response.json();
+  if (response.ok) {
+    alert("Claim sent! Response: " + JSON.stringify(result));
+  } else {
+    alert("Claim failed: " + (result.error || "Unknown error"));
+  }
+}
 
 export default function OutfitDescription() {
   const { state } = useLocation();
@@ -21,68 +34,35 @@ export default function OutfitDescription() {
 
   if (!state || !state.prize) return null;
 
-  const isHoleInOne = state.prize === "hio";
-  const prizeLabel = isHoleInOne ? "Hole-in-One" : "Birdie";
-  const prizeAmount = isHoleInOne ? "$1,000 CASH* + Instant Qualification for the $1 Million Shoot Out" : "$65 Club Card + 200 Points";
-
   const onSubmit = async (e) => {
     e.preventDefault();
-    const combinedTeeTime = `${teeDate} ${teeTime}`;
 
-    // Get player info
-    const playerName = localStorage.getItem("playerName") || "Unknown Player";
-    const playerEmail = localStorage.getItem("playerEmail") || "No email provided";
-
-    // Prepare notification data
-    const notificationData = {
-      playerName,
-      playerEmail,
-      prizeType: prizeLabel,
-      prizeAmount: prizeAmount,
-      outfitDescription: outfit,
-      teeDate,
-      teeTime,
-      timestamp: new Date().toLocaleString(),
-      points: state.points || 0
+    // Compose claimData with fixed fields!
+    const claimData = {
+      claimType: state.prize === "hio" ? "hole-in-one" : "birdie",
+      playerName: localStorage.getItem("playerName") || "",
+      playerEmail: localStorage.getItem("playerEmail") || "",
+      playerPhone: localStorage.getItem("playerPhone") || "",
+      outfitDescription: outfit || "",
+      teeDate: teeDate || "",
+      teeTime: teeTime || ""
     };
 
     try {
-      // Send immediate notification to company
-      const result = await notifyCompany(notificationData);
-      if (result.success) {
-        alert(`✅ Company notified immediately via ${result.method}! Prize processing will begin within 24 hours.`);
-      } else {
-        console.log("Notification logged for manual processing:", result.message);
-        alert(`Prize claim submitted! Company will be notified immediately. ${result.message}`);
-      }
+      await sendClaimEmail(claimData);
       alert("Your submission is under review. You will receive an email when your hole has been reviewed by our team.");
     } catch (error) {
-      console.error("Failed to send company notification:", error);
-      alert("Prize claim submitted! Company notification logged - they will be contacted immediately.");
-      alert("Your submission is under review. You will receive an email when your hole has been reviewed by our team.");
-    }
-
-    // Check tournament qualification after submitting
-    const playerStats = JSON.parse(localStorage.getItem("playerStats") || "{}");
-    const isQualified = playerStats.tournamentQualified || (playerStats.totalPoints >= 800);
-    const isRegistered = playerStats.tournamentRegistered;
-
-    if (isQualified && !isRegistered) {
-      // Show tournament signup opportunity
-      const wantsToRegister = window.confirm(
-        `🏆 CONGRATULATIONS! 🏆\n\nYou now have ${playerStats.totalPoints} points and are QUALIFIED for the $1 MILLION TOURNAMENT!\n\nWould you like to register now?`
-      );
-
-      if (wantsToRegister) {
-        navigate("/tournament-signup");
-        return;
-      }
+      alert("Claim submission failed. Please contact support.");
     }
 
     navigate("/myscorecard", {
-      state: { prize: state.prize, outfit, teeTime: combinedTeeTime },
+      state: { prize: state.prize, outfit, teeTime: `${teeDate} ${teeTime}` },
     });
   };
+
+  const isHoleInOne = state.prize === "hio";
+  const prizeLabel = isHoleInOne ? "Hole-in-One" : "Birdie";
+  const prizeAmount = isHoleInOne ? "$1,000 CASH* + Instant Qualification for the $1 Million Shoot Out" : "$65 Club Card + 200 Points";
 
   return (
     <div
@@ -98,10 +78,8 @@ export default function OutfitDescription() {
     >
       {/* Confetti for Birdie or Hole-in-Won */}
       {(state.prize === "hio" || state.prize === "birdie") && <ConfettiEffect duration={3000} />}
-
       {/* Premium overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-900/40 via-emerald-800/30 to-lime-700/40"></div>
-
       <div className="relative z-10 w-full max-w-sm sm:max-w-md bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 sm:p-6 border border-emerald-200 mx-auto my-4 flex flex-col justify-between min-h-[80svh] overflow-y-auto">
         {/* Congratulations Header */}
         <div className="text-center mb-4">
@@ -118,29 +96,27 @@ export default function OutfitDescription() {
             Let's get some details for recognition and verification.
           </p>
         </div>
-
-        {/* Verification Form */}
-        <form onSubmit={onSubmit} className="space-y-3 sm:space-y-4 flex-1">
+        <form onSubmit={onSubmit} className="flex flex-col gap-3 flex-1 justify-between">
           {/* Outfit Description */}
-          <div>
-            <label className="block text-sm sm:text-base font-medium text-slate-700 mb-1 sm:mb-2">
-              What were you wearing for this amazing shot?
+          <div className="space-y-1">
+            <label className="block text-xs sm:text-sm font-semibold text-slate-700">
+              Outfit Description for Verification
             </label>
             <textarea
-              className="w-full border-2 border-emerald-200 rounded-lg p-2 sm:p-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all resize-none text-[16px]"
-              rows="3"
+              className="w-full border-2 border-emerald-200 rounded-lg p-2 sm:p-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-[16px]"
+              rows={3}
               value={outfit}
               onChange={(e) => setOutfit(e.target.value)}
-              placeholder="Describe your outfit (e.g., blue polo, khaki pants, white golf shoes)"
+              placeholder="Please describe what you were wearing (e.g., blue cap, red polo, white pants)"
               required
               style={{ fontSize: 16 }}
             />
           </div>
-          {/* Tee Date and Time */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-sm sm:text-base font-medium text-slate-700 mb-1 sm:mb-2">
-                Date
+          {/* Date and Time */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700">
+                Date of Achievement
               </label>
               <input
                 type="date"
@@ -151,9 +127,9 @@ export default function OutfitDescription() {
                 style={{ fontSize: 16 }}
               />
             </div>
-            <div>
-              <label className="block text-sm sm:text-base font-medium text-slate-700 mb-1 sm:mb-2">
-                Tee Time
+            <div className="space-y-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700">
+                Approximate Tee Time
               </label>
               <input
                 type="time"
@@ -176,29 +152,6 @@ export default function OutfitDescription() {
             Submit for Verification
           </button>
         </form>
-
-        {/* Video Order Section */}
-        <div className="mt-4 bg-gradient-to-r from-purple-600/10 to-blue-600/10 border-2 border-purple-400/50 rounded-xl p-4">
-          <div className="text-center">
-            <div className="text-2xl mb-2">🎥</div>
-            <h3 className="text-lg font-bold text-purple-800 mb-2">
-              ORDER YOUR VIDEO HERE!
-            </h3>
-            <p className="text-sm text-purple-700 mb-3">
-              Capture this amazing {prizeLabel} moment forever! Professional video footage delivered via email.
-            </p>
-            <button
-              onClick={() => navigate('/order-form')}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 text-sm"
-            >
-              🎥 Order Professional Video - $25.00
-            </button>
-            <p className="text-xs text-purple-600 mt-2">
-              📧 Delivered within 24 hours via email
-            </p>
-          </div>
-        </div>
-
         {/* Footer */}
         <div className="mt-3 text-center pb-2">
           <p className="text-xs text-slate-500">

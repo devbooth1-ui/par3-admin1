@@ -23,6 +23,7 @@ export default function OutfitDescription() {
   const [outfit, setOutfit] = useState("");
   const [teeDate, setTeeDate] = useState("");
   const [teeTime, setTeeTime] = useState("");
+  const [error, setError] = useState("");
 
   // Prefer playerName from navigation state, fallback to localStorage
   const playerName = (state && state.playerName) || localStorage.getItem("playerName") || "Player";
@@ -39,6 +40,17 @@ export default function OutfitDescription() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
+    // Frontend validation: required fields
+    if (!outfit.trim() || !teeDate.trim() || !teeTime.trim()) {
+      setError("All fields are required.");
+      return;
+    }
+    if (!playerName.trim() || !playerEmail.trim()) {
+      setError("Player name and email are required.");
+      return;
+    }
 
     // Compose claimData with fields from form
     const claimData = {
@@ -54,13 +66,12 @@ export default function OutfitDescription() {
     try {
       await sendClaimEmail(claimData);
       alert("Your submission is under review. You will receive an email when your hole has been reviewed by our team.");
+      navigate("/myscorecard", {
+        state: { prize: state.prize, outfit, teeDate, teeTime },
+      });
     } catch (error) {
-      alert("Claim submission failed. Please contact support.");
+      setError("Claim submission failed. Please contact support.");
     }
-
-    navigate("/myscorecard", {
-      state: { prize: state.prize, outfit, teeDate, teeTime },
-    });
   };
 
   const isHoleInOne = state.prize === "hio";
@@ -147,6 +158,7 @@ export default function OutfitDescription() {
           <div className="my-3 text-center text-xs sm:text-sm text-slate-700 font-medium">
             Awards subject to verification. Hole-in-Won confirmation status will be emailed within 24 hours. *Award will be paid back to the method of payment used.
           </div>
+          {error && <div className="text-red-600 text-xs text-center mb-2">{error}</div>}
           <button
             type="submit"
             className="w-full mt-2 px-4 py-3 sm:px-6 sm:py-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg text-base sm:text-lg"

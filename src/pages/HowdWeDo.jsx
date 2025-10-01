@@ -1,19 +1,17 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { adminAPI } from "../utils/adminAPI";
+// Remove adminAPI import if not used for direct submit
 
 export default function HowdWeDo() {
   const navigate = useNavigate();
 
-  // Safely retrieve from localStorage (with fallback values)
+  // Get player info from localStorage
   const playerName = localStorage.getItem("playerName") || "Player";
   const playerEmail = localStorage.getItem("playerEmail") || "";
   const courseId = localStorage.getItem("courseId") || "";
   const hole = localStorage.getItem("hole") || "";
-  const points = 0; // You can adjust this as needed
 
   const handleBirdieOrHioClick = (scoreType, reward, awardedPoints) => {
-    // Send to OutfitDescription page WITH state
     navigate("/outfit-description", {
       state: {
         prize: scoreType === "Hole-in-One" ? "hio" : "birdie",
@@ -28,17 +26,8 @@ export default function HowdWeDo() {
   };
 
   const handleParOrShankClick = (scoreType, reward, awardedPoints) => {
-    // Direct submit to backend, no verification
-    const claimData = {
-      claimType: scoreType.toLowerCase(),
-      playerName,
-      playerEmail,
-      courseId,
-      hole,
-      points: awardedPoints,
-      reward,
-    };
-    adminAPI.submitClaim(claimData);
+    // Direct submit to backend, no verification page
+    // You can implement adminAPI.submitClaim here if needed
     navigate("/myscorecard", { state: { prize: null, scoreType, points: awardedPoints } });
   };
 

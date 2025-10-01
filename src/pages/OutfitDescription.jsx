@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { adminAPI } from "../utils/adminAPI";
 
 export default function OutfitDescription() {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export default function OutfitDescription() {
     setClaimInfo(info ? JSON.parse(info) : null);
   }, []);
 
-  if (!claimInfo || !claimInfo.prize) {
+  if (!claimInfo) {
     return (
       <div style={{ color: "red", padding: 40 }}>
         <h2>Error: Missing claim info. Try again.</h2>
@@ -23,27 +24,32 @@ export default function OutfitDescription() {
     );
   }
 
-  function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // submit data to your backend here
-    alert(`Submitted: ${JSON.stringify({
-      ...claimInfo,
-      outfit,
-      teeDate,
-      teeTime
-    }, null, 2)}`);
-    localStorage.removeItem("claimInfo");
-    navigate("/myscorecard");
-  }
 
-  const isHoleInOne = claimInfo.prize === "hio";
-  const prizeAmount = isHoleInOne
-    ? "$1,000 CASH* + Instant Qualification for the $1 Million Shoot Out"
-    : "$65 Club Card + 200 Points";
+    // Compose full claim data
+    const fullClaim = {
+      ...claimInfo,
+      outfitDescription: outfit,
+      teeDate,
+      teeTime,
+    };
+
+    let claimResult;
+    if (claimInfo.scoreType === "Hole-in-One") {
+      claimResult = await adminAPI.submitHoleInOneClaim(fullClaim, claimInfo.paymentMethod);
+    } else {
+      claimResult = await adminAPI.submitBirdieClaim(fullClaim);
+    }
+
+    localStorage.removeItem("claimInfo");
+
+    // Route to confirmation/scorecard page
+    navigate("/myscorecard", { state: { prize: claimInfo.scoreType.toLowerCase(), outfit, teeDate, teeTime } });
+  };
 
   return (
-    <div
-      className="min-h-screen flex flex-col justify-between p-0 sm:p-4 overflow-hidden"
+    <div className="min-h-screen flex flex-col justify-between p-0 sm:p-4 overflow-hidden"
       style={{
         minHeight: '100dvh',
         backgroundImage: 'url(/golf-bg.jpg)',
@@ -60,10 +66,10 @@ export default function OutfitDescription() {
             Congratulations {claimInfo.playerName}!
           </h1>
           <h2 className="text-lg sm:text-xl font-semibold text-slate-700 mb-1">
-            {isHoleInOne ? "on your Hole-in-One!" : "on your Birdie!"}
+            {claimInfo.scoreType === "Hole-in-One" ? "on your Hole-in-One!" : "on your Birdie!"}
           </h2>
           <p className="text-sm sm:text-base text-slate-600 mb-2">
-            You've claimed: <span className="font-bold text-emerald-700">{prizeAmount}</span>
+            You've claimed: <span className="font-bold text-emerald-700">{claimInfo.reward}</span>
           </p>
           <p className="text-xs sm:text-sm text-slate-600">
             Let's get some details for recognition and verification.

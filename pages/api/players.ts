@@ -57,28 +57,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   await connectMongo();
 
+  // Upsert player info
   if (req.method === "POST") {
     const { name, email, phone, stats } = req.body;
     if (!email) {
       res.status(400).json({ error: "Email required" });
       return;
     }
-
     const player = await Player.findOneAndUpdate(
       { email },
       { name, phone, stats },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
-
     res.status(200).json(player);
     return;
   }
 
+  // Compact GET: only basic info
   if (req.method === "GET") {
-    const compact = req.query.compact;
+    const { compact, email } = req.query;
+
+    if (email) {
+      // GET specific player by email, return all info
+      const player = await Player.findOne({ email });
+      res.status(200).json(player);
+      return;
+    }
+
     let players;
     if (compact === "true") {
-      players = await Player.find({}, "name stats.points stats.lastPlayed email _id");
+      players = await Player.find({}, "name email stats.points stats.lastPlayed");
     } else {
       players = await Player.find({});
     }
@@ -86,6 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
+  // Delete by email
   if (req.method === "DELETE") {
     const { email } = req.body;
     if (!email) {

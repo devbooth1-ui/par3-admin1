@@ -1,7 +1,11 @@
-import React from 'react';
-import Link from 'next/link';
+import React, { ReactNode } from "react";
+import Link from "next/link";
 
-export default function AdminLayout({ children }) {
+interface AdminLayoutProps {
+  children: ReactNode;
+}
+
+export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-100">
       {/* Sidebar + Main Layout */}

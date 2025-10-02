@@ -5,7 +5,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Debug: log incoming body
   console.log('Received claim:', req.body);
 
   const {
@@ -19,7 +18,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     courseName = ""
   } = req.body || {};
 
-  // Trim strings before validation
   if (
     !claimType.trim() ||
     !playerName.trim() ||
@@ -52,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return res.status(200).json({
     ok: true,
-    message: 'Birdie claim submitted successfully',
+    message: 'Claim submitted successfully',
     claim
   });
 }

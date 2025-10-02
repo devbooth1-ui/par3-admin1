@@ -71,7 +71,7 @@ export default function OutfitDescription() {
       courseName // hidden, auto-included
     };
 
-    // <-- Console log to help debug claim data sent to backend
+    // Console log to help debug claim data sent to backend
     console.log("Sending claimData:", claimData);
 
     try {

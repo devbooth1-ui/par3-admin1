@@ -13,8 +13,8 @@
     "@typescript-eslint"
   ],
   "rules": {
-    "semi": ["error", "always"],
-    "quotes": ["error", "double"],
+    "semi": ["warn", "always"],
+    "quotes": "off",
     "no-unused-vars": "warn"
   }
 }

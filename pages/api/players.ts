@@ -32,8 +32,8 @@ const playerSchema = new mongoose.Schema<IPlayer>({
     lastDate: { type: String, default: "" },
     holeInOneQualified: { type: Boolean, default: false },
     tournamentRegistered: { type: Boolean, default: false }
-  },
-}, { minimize: true }); // minimize removes empty objects
+  }
+}, { minimize: true });
 
 const Player: Model<IPlayer> =
   (mongoose.models.Player as Model<IPlayer>) || mongoose.model<IPlayer>("Player", playerSchema);

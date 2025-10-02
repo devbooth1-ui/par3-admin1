@@ -19,14 +19,16 @@ async function sendClaimEmail(claimData) {
 export default function OutfitDescription() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const [outfit, setOutfit] = useState("");
+  const [outfitDescription, setOutfitDescription] = useState("");
+  const [teeDate, setTeeDate] = useState("");
+  const [teeTime, setTeeTime] = useState("");
   const [error, setError] = useState("");
 
-  // Pull player info from navigation state or localStorage
   const playerName = (state && state.playerName) || localStorage.getItem("playerName") || "";
   const playerEmail = (state && state.playerEmail) || localStorage.getItem("playerEmail") || "";
   const playerPhone = (state && state.playerPhone) || localStorage.getItem("playerPhone") || "";
   const claimType = (state && state.prize === "hio") ? "hole-in-one" : "birdie";
+  const courseName = localStorage.getItem("playerCourseName") || "";
 
   useEffect(() => {
     if (!state || !state.prize) navigate("/howd-we-do", { replace: true });
@@ -38,19 +40,26 @@ export default function OutfitDescription() {
     e.preventDefault();
     setError("");
 
-    // Required by backend
-    if (!claimType.trim() || !playerName.trim() || !playerEmail.trim()) {
-      setError("Claim type, name, and email are required.");
+    if (
+      !claimType.trim() ||
+      !playerName.trim() ||
+      !playerEmail.trim() ||
+      !teeDate.trim() ||
+      !teeTime.trim()
+    ) {
+      setError("All required fields must be filled: claimType, playerName, playerEmail, teeDate, teeTime.");
       return;
     }
 
-    // Compose ONLY the fields backend wants
     const claimData = {
       claimType,
       playerName,
       playerEmail,
       playerPhone,
-      outfitDescription: outfit
+      outfitDescription,
+      teeDate,
+      teeTime,
+      courseName
     };
 
     console.log("Sending claimData:", claimData);
@@ -58,7 +67,6 @@ export default function OutfitDescription() {
     try {
       await sendClaimEmail(claimData);
 
-      // Update local points immediately after successful claim
       let stats = JSON.parse(localStorage.getItem("playerStats") || "{}");
       if (claimType === "birdie") {
         stats.totalPoints = (stats.totalPoints || 0) + 200;
@@ -72,7 +80,7 @@ export default function OutfitDescription() {
 
       alert("Your submission is under review. You will receive an email when your hole has been reviewed by our team.");
       navigate("/myscorecard", {
-        state: { prize: state.prize, outfit },
+        state: { prize: state.prize, outfitDescription, teeDate, teeTime },
       });
     } catch (error) {
       setError("Claim submission failed. Please contact support.");
@@ -119,13 +127,42 @@ export default function OutfitDescription() {
             <textarea
               className="w-full border-2 border-emerald-200 rounded-lg p-2 sm:p-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-[16px]"
               rows={3}
-              value={outfit}
-              onChange={(e) => setOutfit(e.target.value)}
+              value={outfitDescription}
+              onChange={(e) => setOutfitDescription(e.target.value)}
               placeholder="Please describe what you were wearing (e.g., blue cap, red polo, white pants)"
               required
               style={{ fontSize: 16 }}
             />
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700">
+                Date of Achievement
+              </label>
+              <input
+                type="date"
+                className="w-full border-2 border-emerald-200 rounded-lg p-2 sm:p-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-[16px]"
+                value={teeDate}
+                onChange={(e) => setTeeDate(e.target.value)}
+                required
+                style={{ fontSize: 16 }}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700">
+                Approximate Tee Time
+              </label>
+              <input
+                type="time"
+                className="w-full border-2 border-emerald-200 rounded-lg p-2 sm:p-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-[16px]"
+                value={teeTime}
+                onChange={(e) => setTeeTime(e.target.value)}
+                required
+                style={{ fontSize: 16 }}
+              />
+            </div>
+          </div>
+          <input type="hidden" name="courseName" value={courseName} />
           <div className="my-3 text-center text-xs sm:text-sm text-slate-700 font-medium">
             Awards subject to verification. Hole-in-Won confirmation status will be emailed within 24 hours. *Award will be paid back to the method of payment used.
           </div>

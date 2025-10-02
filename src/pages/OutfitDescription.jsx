@@ -25,12 +25,9 @@ export default function OutfitDescription() {
   const [teeTime, setTeeTime] = useState("");
   const [error, setError] = useState("");
 
-  // Pull player info from navigation state or localStorage
   const playerName = (state && state.playerName) || localStorage.getItem("playerName") || "Player";
   const playerEmail = (state && state.playerEmail) || localStorage.getItem("playerEmail") || "";
   const claimType = state && state.prize === "hio" ? "hole-in-one" : "birdie";
-
-  // Get course name from localStorage, set by fencing logic
   const courseName = localStorage.getItem("playerCourseName") || "";
 
   const firstName = playerName.split(" ")[0];
@@ -46,7 +43,6 @@ export default function OutfitDescription() {
     e.preventDefault();
     setError("");
 
-    // Frontend validation: required fields
     if (!outfit.trim() || !teeDate.trim() || !teeTime.trim()) {
       setError("All fields are required.");
       return;
@@ -60,18 +56,17 @@ export default function OutfitDescription() {
       return;
     }
 
-    // Compose claimData with fields from form and hidden/localStorage
+    // FINAL: Use backend's expected field names (snake_case)
     const claimData = {
-      claimType,
-      playerName,
-      playerEmail,
-      outfitDescription: outfit,
-      teeDate,
-      teeTime,
-      courseName // hidden, auto-included
+      claim_type: claimType,
+      player_name: playerName,
+      player_email: playerEmail,
+      outfit_description: outfit,
+      tee_date: teeDate,
+      tee_time: teeTime,
+      course_name: courseName
     };
 
-    // Console log to help debug claim data sent to backend
     console.log("Sending claimData:", claimData);
 
     try {
@@ -101,12 +96,9 @@ export default function OutfitDescription() {
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Confetti for Birdie or Hole-in-Won */}
       {(state.prize === "hio" || state.prize === "birdie") && <ConfettiEffect duration={3000} />}
-      {/* Premium overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-900/40 via-emerald-800/30 to-lime-700/40"></div>
       <div className="relative z-10 w-full max-w-sm sm:max-w-md bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 sm:p-6 border border-emerald-200 mx-auto my-4 flex flex-col justify-between min-h-[80svh] overflow-y-auto">
-        {/* Congratulations Header */}
         <div className="text-center mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-green-600 to-lime-600 mb-1">
             Congratulations {capitalizedFirstName}!
@@ -122,7 +114,6 @@ export default function OutfitDescription() {
           </p>
         </div>
         <form onSubmit={onSubmit} className="flex flex-col gap-3 flex-1 justify-between">
-          {/* Outfit Description */}
           <div className="space-y-1">
             <label className="block text-xs sm:text-sm font-semibold text-slate-700">
               Outfit Description for Verification
@@ -137,7 +128,6 @@ export default function OutfitDescription() {
               style={{ fontSize: 16 }}
             />
           </div>
-          {/* Date and Time */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="space-y-1">
               <label className="block text-xs sm:text-sm font-semibold text-slate-700">
@@ -166,7 +156,6 @@ export default function OutfitDescription() {
               />
             </div>
           </div>
-          {/* Hidden field: course name, auto-included in claimData, not shown to user */}
           <input type="hidden" name="courseName" value={courseName} />
           <div className="my-3 text-center text-xs sm:text-sm text-slate-700 font-medium">
             Awards subject to verification. Hole-in-Won confirmation status will be emailed within 24 hours. *Award will be paid back to the method of payment used.
@@ -179,7 +168,6 @@ export default function OutfitDescription() {
             Submit for Verification
           </button>
         </form>
-        {/* Footer */}
         <div className="mt-3 text-center pb-2">
           <p className="text-xs text-slate-500">
             🔒 Your information is secure and used only for prize verification

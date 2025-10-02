@@ -25,12 +25,13 @@ export default function OutfitDescription() {
   const [teeTime, setTeeTime] = useState("");
   const [error, setError] = useState("");
 
-  const playerName = (state && state.playerName) || localStorage.getItem("playerName") || "Player";
+  // Pull player info from navigation state or localStorage
+  const playerName = (state && state.playerName) || localStorage.getItem("playerName") || "";
   const playerEmail = (state && state.playerEmail) || localStorage.getItem("playerEmail") || "";
-  const claimType = state && state.prize === "hio" ? "hole-in-one" : "birdie";
-  const courseName = localStorage.getItem("playerCourseName") || "";
+  const playerPhone = (state && state.playerPhone) || localStorage.getItem("playerPhone") || "";
+  const claimType = (state && state.prize === "hio") ? "hole-in-one" : "birdie";
 
-  const firstName = playerName.split(" ")[0];
+  const firstName = playerName.split(" ")[0] || "";
   const capitalizedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
 
   useEffect(() => {
@@ -43,28 +44,19 @@ export default function OutfitDescription() {
     e.preventDefault();
     setError("");
 
-    if (!outfit.trim() || !teeDate.trim() || !teeTime.trim()) {
-      setError("All fields are required.");
-      return;
-    }
-    if (!playerName.trim() || !playerEmail.trim()) {
-      setError("Player name and email are required.");
-      return;
-    }
-    if (!courseName.trim()) {
-      setError("Course name is required for verification.");
+    // Required by backend
+    if (!claimType.trim() || !playerName.trim() || !playerEmail.trim()) {
+      setError("Claim type, name, and email are required.");
       return;
     }
 
-    // FINAL: Use backend's expected field names (snake_case)
+    // Compose ONLY the fields backend wants
     const claimData = {
-      claim_type: claimType,
-      player_name: playerName,
-      player_email: playerEmail,
-      outfit_description: outfit,
-      tee_date: teeDate,
-      tee_time: teeTime,
-      course_name: courseName
+      claimType,
+      playerName,
+      playerEmail,
+      playerPhone,
+      outfitDescription: outfit
     };
 
     console.log("Sending claimData:", claimData);
@@ -81,7 +73,6 @@ export default function OutfitDescription() {
   };
 
   const isHoleInOne = state.prize === "hio";
-  const prizeLabel = isHoleInOne ? "Hole-in-One" : "Birdie";
   const prizeAmount = isHoleInOne ? "$1,000 CASH* + Instant Qualification for the $1 Million Shoot Out" : "$65 Club Card + 200 Points";
 
   return (
@@ -138,7 +129,6 @@ export default function OutfitDescription() {
                 className="w-full border-2 border-emerald-200 rounded-lg p-2 sm:p-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-[16px]"
                 value={teeDate}
                 onChange={(e) => setTeeDate(e.target.value)}
-                required
                 style={{ fontSize: 16 }}
               />
             </div>
@@ -151,12 +141,10 @@ export default function OutfitDescription() {
                 className="w-full border-2 border-emerald-200 rounded-lg p-2 sm:p-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-[16px]"
                 value={teeTime}
                 onChange={(e) => setTeeTime(e.target.value)}
-                required
                 style={{ fontSize: 16 }}
               />
             </div>
           </div>
-          <input type="hidden" name="courseName" value={courseName} />
           <div className="my-3 text-center text-xs sm:text-sm text-slate-700 font-medium">
             Awards subject to verification. Hole-in-Won confirmation status will be emailed within 24 hours. *Award will be paid back to the method of payment used.
           </div>

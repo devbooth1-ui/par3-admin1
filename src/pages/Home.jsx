@@ -13,6 +13,9 @@ const COURSE_MAP = [
   // Add more courses/holes here
 ];
 
+// Hard-coded course name for all sessions
+const HARDCODED_COURSE_NAME = "Wentworth Hole #4";
+
 function getCourseInfo(lat, lng) {
   // Simple radius check (not accurate for real-world, but fine for demo)
   for (const course of COURSE_MAP) {
@@ -43,11 +46,14 @@ export default function Home() {
     }
   };
 
-  // ...existing code...
   // Geolocation state
   const [geo, setGeo] = useState({ loading: true, error: null, course: null });
 
   useEffect(() => {
+    // Hard-code course name in localStorage for all users/sessions
+    localStorage.setItem("playerCourseName", HARDCODED_COURSE_NAME);
+
+    // --- Your existing geolocation logic (can be kept for future use) ---
     if (!navigator.geolocation) {
       setGeo({ loading: false, error: "Geolocation not supported", course: null });
       return;
@@ -61,6 +67,8 @@ export default function Home() {
           navigate("/", { replace: true });
         } else {
           setGeo({ loading: false, error: null, course });
+          // If you want to use dynamic in future, you would set:
+          // localStorage.setItem("playerCourseName", course.name);
         }
       },
       (err) => {
@@ -68,8 +76,6 @@ export default function Home() {
       }
     );
   }, [navigate]);
-
-  // ...existing code...
 
   return (
     <div className="relative min-h-screen flex flex-col justify-start items-center overflow-hidden text-white">
@@ -139,11 +145,10 @@ export default function Home() {
         <div className="w-full flex justify-center items-center mt-6 mb-2 px-2">
           <div className="relative bg-emerald-600/30 rounded-xl p-3 sm:p-5 shadow-lg backdrop-blur-sm border border-emerald-300/40 min-w-[180px] max-w-xs sm:max-w-md w-full flex flex-col items-start" style={{ border: '1.5px solid rgba(52,211,153,0.25)' }}>
             <span className="text-base sm:text-lg font-bold text-white/90 mb-1">Today's Challenge</span>
-            {/* Simulate loaded course info for layout test */}
+            {/* Show hard-coded course name */}
             <span className="text-white/90 text-sm sm:text-base font-semibold mb-2">
-              Wentworth Hole #4 &bull; Approx. 176 yards
+              {HARDCODED_COURSE_NAME} &bull; Approx. 176 yards
             </span>
-            {/* If no course is found, user will be redirected to homepage, so nothing is rendered here. */}
             <ul className="text-white/80 text-sm sm:text-base font-medium list-disc pl-4 space-y-2">
               <li>Login, pay entry, $8 and tee off.</li>
               <li>Follow all prompts for verification.</li>
@@ -161,7 +166,6 @@ export default function Home() {
             >
               Let's Go!
             </button>
-            {/* Watch Promo Again button removed */}
           </div>
         </div>
       </div>

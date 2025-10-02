@@ -13,17 +13,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     playerName = "",
     playerEmail = "",
     playerPhone = "",
-    outfitDescription = ""
+    outfitDescription = "",
+    teeDate = "",
+    teeTime = "",
+    courseName = ""
   } = req.body || {};
 
   // Trim strings before validation
   if (
     !claimType.trim() ||
     !playerName.trim() ||
-    !playerEmail.trim()
+    !playerEmail.trim() ||
+    !teeDate.trim() ||
+    !teeTime.trim()
   ) {
     return res.status(400).json({
-      error: 'Missing required fields: claimType, playerName, playerEmail'
+      error: 'Missing required fields: claimType, playerName, playerEmail, teeDate, teeTime'
     });
   }
 
@@ -39,6 +44,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     playerEmail: playerEmail.trim(),
     playerPhone: playerPhone.trim(),
     outfitDescription: outfitDescription.trim(),
+    teeDate: teeDate.trim(),
+    teeTime: teeTime.trim(),
+    courseName: courseName.trim(),
     submittedAt: new Date().toISOString()
   };
 

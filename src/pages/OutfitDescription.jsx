@@ -25,10 +25,14 @@ export default function OutfitDescription() {
   const [teeTime, setTeeTime] = useState("");
   const [error, setError] = useState("");
 
-  // Prefer playerName from navigation state, fallback to localStorage
+  // Pull player info from navigation state or localStorage
   const playerName = (state && state.playerName) || localStorage.getItem("playerName") || "Player";
   const playerEmail = (state && state.playerEmail) || localStorage.getItem("playerEmail") || "";
-  const playerPhone = localStorage.getItem("playerPhone") || "";
+  const claimType = state && state.prize === "hio" ? "hole-in-one" : "birdie";
+
+  // Get course name from localStorage, set by fencing logic
+  const courseName = localStorage.getItem("playerCourseName") || "";
+
   const firstName = playerName.split(" ")[0];
   const capitalizedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
 
@@ -51,16 +55,20 @@ export default function OutfitDescription() {
       setError("Player name and email are required.");
       return;
     }
+    if (!courseName.trim()) {
+      setError("Course name is required for verification.");
+      return;
+    }
 
-    // Compose claimData with fields from form
+    // Compose claimData with fields from form and hidden/localStorage
     const claimData = {
-      claimType: state.prize === "hio" ? "hole-in-one" : "birdie",
+      claimType,
       playerName,
       playerEmail,
-      playerPhone,
       outfitDescription: outfit,
       teeDate,
-      teeTime
+      teeTime,
+      courseName // hidden, auto-included
     };
 
     try {
@@ -155,6 +163,8 @@ export default function OutfitDescription() {
               />
             </div>
           </div>
+          {/* Hidden field: course name, auto-included in claimData, not shown to user */}
+          <input type="hidden" name="courseName" value={courseName} />
           <div className="my-3 text-center text-xs sm:text-sm text-slate-700 font-medium">
             Awards subject to verification. Hole-in-Won confirmation status will be emailed within 24 hours. *Award will be paid back to the method of payment used.
           </div>

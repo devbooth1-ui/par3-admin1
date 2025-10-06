@@ -72,7 +72,7 @@ const CATEGORY_OPTIONS = [
     { value: 'marketing', label: 'Marketing Revenue' },
 ];
 
-function getStatusStyles(status) {
+function getStatusStyles(status: string) {
     switch (status) {
         case 'completed':
             return 'bg-green-100 text-green-800 border-green-300';
@@ -84,7 +84,7 @@ function getStatusStyles(status) {
             return 'bg-gray-100 text-gray-800 border-gray-300';
     }
 }
-function getTypeLabel(type) {
+function getTypeLabel(type: string) {
     return (
         <span
             className={`font-semibold ${type === 'income' ? 'text-green-600' : 'text-red-600'
@@ -92,6 +92,52 @@ function getTypeLabel(type) {
         >
             {type === 'income' ? '+ Income' : '- Expense'}
         </span>
+    );
+}
+
+interface SummaryCardProps {
+    color: string;
+    icon: React.ReactNode;
+    label: string;
+    value: number | string;
+    valueClass?: string;
+}
+function SummaryCard({ color, icon, label, value, valueClass = '' }: SummaryCardProps) {
+    return (
+        <div className="bg-white border border-gray-200 shadow-lg rounded-lg flex items-center px-5 py-4 gap-4">
+            <div
+                className={`w-12 h-12 rounded-full flex items-center justify-center ${color} shadow text-white text-2xl font-black`}
+            >
+                {icon}
+            </div>
+            <div>
+                <div className="text-sm text-gray-500 font-medium">{label}</div>
+                <div className={`text-xl font-extrabold ${valueClass}`}>
+                    {typeof value === 'number' ? `$${value.toFixed(2)}` : value}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+interface ThProps {
+    children: React.ReactNode;
+}
+function Th({ children }: ThProps) {
+    return (
+        <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider bg-gray-50">
+            {children}
+        </th>
+    );
+}
+
+interface TdProps {
+    children: React.ReactNode;
+    className?: string;
+}
+function Td({ children, className = '' }: TdProps) {
+    return (
+        <td className={`px-6 py-4 whitespace-nowrap ${className}`}>{children}</td>
     );
 }
 
@@ -307,37 +353,5 @@ export default function Accounting() {
                 </section>
             </div>
         </AdminLayout>
-    );
-}
-
-function SummaryCard({ color, icon, label, value, valueClass = '' }) {
-    return (
-        <div className="bg-white border border-gray-200 shadow-lg rounded-lg flex items-center px-5 py-4 gap-4">
-            <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center ${color} shadow text-white text-2xl font-black`}
-            >
-                {icon}
-            </div>
-            <div>
-                <div className="text-sm text-gray-500 font-medium">{label}</div>
-                <div className={`text-xl font-extrabold ${valueClass}`}>
-                    {typeof value === 'number' ? `$${value.toFixed(2)}` : value}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function Th({ children }) {
-    return (
-        <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider bg-gray-50">
-            {children}
-        </th>
-    );
-}
-
-function Td({ children, className = '' }) {
-    return (
-        <td className={`px-6 py-4 whitespace-nowrap ${className}`}>{children}</td>
     );
 }

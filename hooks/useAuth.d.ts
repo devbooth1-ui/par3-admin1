@@ -1,7 +1,13 @@
+export interface AuthUser {
+    email: string;
+    token: string;
+    role: string;
+}
+
 export interface Auth {
-    user: any;
+    user: AuthUser | null;
     loading: boolean;
-    login: (email: string, password: string) => Promise<void>;
+    login: (userData: AuthUser) => void;
     logout: () => void;
 }
 

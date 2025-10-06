@@ -5,7 +5,7 @@
     "node": true,
     "browser": true
   },
-  "extends": [],
+  "extends": ["next"],
   "parser": "@typescript-eslint/parser",
   "plugins": [
     "@typescript-eslint"

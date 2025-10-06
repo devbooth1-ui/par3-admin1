@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { connectMongo, Claim, Player } from '../../lib/mongo';
 import { cors, runMiddleware } from './_cors';
+import { generateQRCode } from '../../lib/qr';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     await runMiddleware(req, res, cors);
@@ -14,14 +15,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             // Find player by email
             const player = await Player.findOne({ playerEmail: normalizedEmail });
+            let qrCode = null;
             if (player) {
                 let points = 50;
                 let qualified = false;
                 if (claimData.claimType === 'birdie') {
                     points += 200;
+                    // Generate QR code for birdie claims only
+                    const qrData = JSON.stringify({
+                        claimId: result._id,
+                        playerEmail: normalizedEmail,
+                        playerName: player.playerName,
+                        courseId: claimData.courseId,
+                        courseName: claimData.courseName,
+                        awardType: claimData.claimType,
+                        claimDate: result.submitted_at,
+                        awardAmount: 65
+                    });
+                    qrCode = await generateQRCode(qrData);
                 } else if (claimData.claimType === 'hole in one') {
                     points = 800;
                     qualified = true;
+                    // No QR code for hole in one claims
                 }
                 // Update player record
                 await Player.updateOne(
@@ -36,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }
                 );
             }
-            res.status(201).json({ success: true, id: result._id });
+            res.status(201).json({ success: true, id: result._id, qrCode });
         } else if (req.method === 'GET') {
             const allClaims = await Claim.find({});
             res.status(200).json({ success: true, claims: allClaims });

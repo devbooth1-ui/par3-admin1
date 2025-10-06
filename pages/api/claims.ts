@@ -55,6 +55,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } else if (req.method === 'GET') {
             const allClaims = await Claim.find({});
             res.status(200).json({ success: true, claims: allClaims });
+        } else if (req.method === 'DELETE') {
+            const { _id } = req.body;
+            if (!_id) {
+                return res.status(400).json({ error: 'Missing required field: _id' });
+            }
+            try {
+                const result = await Claim.deleteOne({ _id });
+                if (result.deletedCount === 1) {
+                    return res.status(200).json({ success: true });
+                } else {
+                    return res.status(404).json({ error: 'Claim not found' });
+                }
+            } catch (error: any) {
+                return res.status(500).json({ success: false, error: error.message });
+            }
         } else {
             res.status(405).json({ error: 'Method not allowed' });
         }

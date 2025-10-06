@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === 'GET') {
         try {
             const allPlayers = await players.find({}).toArray();
-            return res.status(200).json(allPlayers);
+            return res.status(200).json({ players: allPlayers });
         } catch (err) {
             return res.status(500).json({ error: 'Failed to fetch players' });
         }
@@ -44,7 +44,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (player) {
                 // Update player info and push claim/course if provided
                 let update: any = { $set: { name, phone, stats } };
-                if (claim) update.$push = { claims: claim };
+                // Prevent duplicate claims
+                if (claim) {
+                    const hasClaim = Array.isArray(player.claims) && player.claims.some((c: any) => JSON.stringify(c) === JSON.stringify(claim));
+                    if (!hasClaim) {
+                        update.$push = { claims: claim };
+                    }
+                }
                 if (courseId) {
                     if (!update.$push) update.$push = {};
                     update.$push.coursesPlayed = courseId;
@@ -85,6 +91,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(200).json(player);
         } catch (err) {
             return res.status(500).json({ error: 'Failed to update player stats' });
+        }
+    }
+
+    if (req.method === 'DELETE') {
+        const { _id } = req.body;
+        if (!_id) {
+            return res.status(400).json({ error: 'Missing required field: _id' });
+        }
+        try {
+            const result = await players.deleteOne({ _id: new ObjectId(_id) });
+            if (result.deletedCount === 1) {
+                return res.status(200).json({ success: true });
+            } else {
+                return res.status(404).json({ error: 'Player not found' });
+            }
+        } catch (err) {
+            return res.status(500).json({ error: 'Failed to delete player' });
         }
     }
 

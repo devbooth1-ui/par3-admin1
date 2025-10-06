@@ -1,7 +1,6 @@
-// Import the claims from the main claims.ts file
-import claimsHandler from '../claims'
+import type { NextApiRequest, NextApiResponse } from 'next';
 
-export default function handler(req, res) {
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const { id } = req.query
 
     if (req.method === 'PATCH') {

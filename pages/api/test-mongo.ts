@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(req, res) {
+export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
   console.log("MONGODB_URI:", process.env.MONGODB_URI); // Debug: print env var
   const uri = process.env.MONGODB_URI;
   if (!uri) {
@@ -14,7 +15,7 @@ export default async function handler(req, res) {
     const collections = await db.listCollections().toArray();
     res.status(200).json({ success: true, collections });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: (error as Error).message });
   } finally {
     await client.close();
   }

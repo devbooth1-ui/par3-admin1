@@ -14,7 +14,7 @@ interface Customer {
     joinDate: string;
     lastActivity: string;
     totalBookings: number;
-    status: 'active' | 'inactive' | 'suspended';
+    status: string;
 }
 
 export default function CRM() {
@@ -28,7 +28,7 @@ export default function CRM() {
     }
 
     // Fetch customers/players from backend
-    const [customers, setCustomers] = useState([]);
+    const [customers, setCustomers] = useState<Customer[]>([]);
     useEffect(() => {
         fetch('/api/players')
             .then(res => res.json())

@@ -4,7 +4,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
-  const { to, playerName, tournamentUrl } = req.body;
+  const { to, tournamentUrl } = req.body;
   const subject = 'Congratulations on your Hole in One!';
   const body = `
     <div style="font-family:sans-serif;">

@@ -34,7 +34,7 @@ export default function Login() {
                 // Set cookie for SSR auth
                 Cookies.set('adminToken', data.token, { expires: 7, sameSite: 'strict', path: '/' });
                 // Simulate user data for login context, now with role
-                login(email, password);
+                login({ email, token: data.token, role: data.role });
             } else {
                 setError('Invalid credentials');
             }

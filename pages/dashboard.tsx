@@ -96,7 +96,7 @@ const recentActivity = [
 ];
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-	const { req, res } = context;
+	const { req, res: _res } = context;
 	const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
 	const token = cookies.adminToken;
 

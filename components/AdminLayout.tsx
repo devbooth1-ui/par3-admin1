@@ -1,5 +1,6 @@
 import React, { ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -47,7 +48,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
             <div className="flex items-center gap-4">
               <span className="hidden md:block text-gray-700 font-medium">Admin User</span>
-              <img src="https://i.pravatar.cc/40?img=3" alt="User Avatar" className="w-10 h-10 rounded-full border-2 border-blue-200 shadow" />
+              <Image src="https://i.pravatar.cc/40?img=3" alt="User Avatar" width={40} height={40} className="rounded-full border-2 border-blue-200 shadow" />
             </div>
           </header>
 

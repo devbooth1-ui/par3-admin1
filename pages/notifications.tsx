@@ -3,17 +3,6 @@ import AdminLayout from '../components/AdminLayout';
 import Link from 'next/link';
 
 
-interface Notification {
-    id: number;
-    title: string;
-    message: string;
-    type: 'email' | 'push' | 'sms';
-    status: 'sent' | 'pending' | 'failed' | 'draft';
-    recipients: number;
-    sentAt?: string;
-    createdAt: string;
-}
-
 export default function Notifications() {
     const [notifications] = useState([
         {

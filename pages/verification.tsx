@@ -67,7 +67,7 @@ export default function Verification() {
 
     const [selectedStatus, setSelectedStatus] = useState('all');
     const [showReviewModal, setShowReviewModal] = useState(false);
-    const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
     const filteredUsers = users.filter(user => {
         return selectedStatus === 'all' || user.verificationStatus === selectedStatus;

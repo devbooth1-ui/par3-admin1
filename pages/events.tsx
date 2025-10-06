@@ -94,7 +94,7 @@ export default function Events() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedType, setSelectedType] = useState('all');
+  const [selectedType, _setSelectedType] = useState('all');
   const [newEvent, setNewEvent] = useState<Event>({
     id: events.length + 1,
     title: '',

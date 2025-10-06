@@ -1,4 +1,6 @@
 import { MongoClient, ObjectId } from 'mongodb';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { cors, runMiddleware } from './_cors';
 
 const uri = process.env.MONGODB_URI;
 
@@ -9,18 +11,8 @@ async function getClient() {
   return client;
 }
 
-export default async function handler(req, res) {
-  // --- CORS HEADERS ---
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173'); // Add your prod frontend domain as needed
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  // Handle preflight CORS request
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-  // --- END CORS ---
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  await runMiddleware(req, res, cors);
 
   if (req.method === 'GET') {
     // Fetch the most recently added tournament
@@ -31,7 +23,8 @@ export default async function handler(req, res) {
       await client.close();
       res.status(200).json({ tournament: tournament[0] || null });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      const err = error as Error;
+      res.status(500).json({ error: err.message });
     }
   } else if (req.method === 'POST') {
     // Update or insert tournament
@@ -51,7 +44,8 @@ export default async function handler(req, res) {
       await client.close();
       res.status(200).json({ success: true, result });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      const err = error as Error;
+      res.status(500).json({ error: err.message });
     }
   } else {
     res.setHeader('Allow', ['GET', 'POST', 'OPTIONS']);

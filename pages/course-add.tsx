@@ -41,6 +41,24 @@ export default function CourseAdd() {
     setAddress(foundAddress);
   }
 
+  function handleClear() {
+    setName("");
+    setAddress("");
+    setCity("");
+    setDescription("");
+    setGolfPro("");
+    setEmployee("");
+    setHoleNumber("");
+    setYardage("");
+    setPhone("");
+    setEmail("");
+    setErrors({});
+    setFoundAddress("");
+    setLat(37.7749);
+    setLng(-122.4194);
+    setRadius(1200);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const errs = validate();
@@ -180,6 +198,9 @@ export default function CourseAdd() {
         </div>
         <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded font-semibold w-full mt-4">
           Add Course
+        </button>
+        <button type="button" className="bg-gray-400 text-white px-6 py-2 rounded font-semibold w-full mt-2" onClick={handleClear}>
+          Clear All
         </button>
       </form>
     </div>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 
 interface Customer {
@@ -16,56 +18,23 @@ interface Customer {
 }
 
 export default function CRM() {
-    const [customers, setCustomers] = useState([
-        {
-            id: 1,
-            name: 'John Smith',
-            email: 'john@example.com',
-            phone: '(555) 123-4567',
-            company: 'ABC Corp',
-            notes: 'Frequent buyer, prefers email contact.',
-            joinDate: '2024-01-15',
-            lastActivity: '2024-03-10',
-            totalBookings: 12,
-            status: 'active'
-        },
-        {
-            id: 2,
-            name: 'Sarah Johnson',
-            email: 'sarah@example.com',
-            phone: '(555) 234-5678',
-            company: 'XYZ Inc',
-            notes: 'New customer, interested in premium membership.',
-            joinDate: '2024-02-20',
-            lastActivity: '2024-03-12',
-            totalBookings: 8,
-            status: 'active'
-        },
-        {
-            id: 3,
-            name: 'Mike Davis',
-            email: 'mike@example.com',
-            phone: '(555) 345-6789',
-            company: 'LMN LLC',
-            notes: 'Has not booked in a while, consider re-engagement.',
-            joinDate: '2024-01-05',
-            lastActivity: '2024-02-28',
-            totalBookings: 15,
-            status: 'inactive'
-        },
-        {
-            id: 4,
-            name: 'Lisa Wilson',
-            email: 'lisa@example.com',
-            phone: '(555) 456-7890',
-            company: 'OPQ Ltd',
-            notes: 'Prefers phone contact, interested in group discounts.',
-            joinDate: '2024-03-01',
-            lastActivity: '2024-03-11',
-            totalBookings: 3,
-            status: 'active'
-        }
-    ]);
+    const router = useRouter();
+    // Accept both ?course=idx and ?courseIdx=idx for flexibility
+    const courseIdx = router.query.course ?? router.query.courseIdx;
+    let course = null;
+    if (typeof window !== 'undefined' && courseIdx !== undefined) {
+        const stored = JSON.parse(localStorage.getItem('courses') || '[]');
+        course = stored[Number(courseIdx)] || null;
+    }
+
+    // Fetch customers/players from backend
+    const [customers, setCustomers] = useState([]);
+    useEffect(() => {
+        fetch('/api/players')
+            .then(res => res.json())
+            .then(data => setCustomers(data))
+            .catch(() => setCustomers([]));
+    }, []);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('all');
@@ -81,6 +50,8 @@ export default function CRM() {
         totalBookings: 0,
         status: 'active',
     });
+    const [courseNotes, setCourseNotes] = useState(course?.notes || "");
+    const [editingCourse, setEditingCourse] = useState(false);
 
     const filteredCustomers = customers.filter(customer => {
         const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -127,17 +98,27 @@ export default function CRM() {
     return (
         <AdminLayout>
             <div className="min-h-screen bg-gray-50 p-8">
+                {/* Show course info if available */}
+                {course && (
+                    <div className="mb-6 p-4 bg-blue-50 rounded shadow">
+                        <h2 className="text-xl font-bold text-blue-900 mb-2">Course: {course.name}</h2>
+                        <div className="text-sm text-gray-700">Hole: {course.holeNumber} | Yardage: {course.yardage}</div>
+                        <div className="text-sm text-gray-700">Phone: {course.phone || 'N/A'} | Email: {course.email || 'N/A'}</div>
+                        <div className="text-sm text-gray-700">Address: {course.address || 'N/A'}, {course.city || ''}</div>
+                    </div>
+                )}
+
                 {/* Navigation */}
                 <nav className="bg-white shadow-lg">
                     <div className="max-w-7xl mx-auto px-4">
                         <div className="flex justify-between h-16">
                             <div className="flex items-center">
-                                <a href="/dashboard">← Back to Dashboard</a>
+                                <Link href="/dashboard" className="mr-4 text-blue-600 hover:underline">← Back to Dashboard</Link>
                                 <h1 className="text-xl font-bold text-gray-800">Customer Management</h1>
                             </div>
                             <div className="flex items-center space-x-4">
-                                <a href="/dashboard">Dashboard</a>
-                                <a href="/login">Logout</a>
+                                <Link href="/dashboard" className="text-blue-600 hover:underline">Dashboard</Link>
+                                <Link href="/login" className="text-blue-600 hover:underline">Logout</Link>
                             </div>
                         </div>
                     </div>
@@ -292,6 +273,45 @@ export default function CRM() {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
+                                    {/* Show course info as a row if available */}
+                                    {course && (
+                                        <tr className="bg-blue-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-bold text-blue-900">{course.name}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">{course.email || "N/A"}</div>
+                                                <div className="text-sm text-gray-500">{course.phone || "N/A"}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.holeNumber || "N/A"}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.yardage || "N/A"}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">-</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Course</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <button className="text-blue-600 hover:text-blue-900 mr-3" onClick={() => setEditingCourse(true)}>Edit</button>
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {/* Show editable notes field for course */}
+                                    {editingCourse && course && (
+                                        <tr className="bg-blue-50">
+                                            <td colSpan={7} className="px-6 py-4">
+                                                <div className="mb-2 font-semibold">Course Notes:</div>
+                                                <textarea
+                                                    className="w-full p-2 border rounded"
+                                                    value={courseNotes}
+                                                    onChange={e => setCourseNotes(e.target.value)}
+                                                />
+                                                <div className="flex gap-2 mt-2">
+                                                    <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" onClick={() => { setEditingCourse(false); course.notes = courseNotes; }}>Save</button>
+                                                    <button className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500" onClick={() => setEditingCourse(false)}>Cancel</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {/* Existing customer rows */}
                                     {filteredCustomers.map((customer) => (
                                         <tr key={customer.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap">

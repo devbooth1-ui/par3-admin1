@@ -1,11 +1,7 @@
-import express, { Request, Response, NextFunction } from 'express';
-import bcrypt from 'bcrypt';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import cors from 'cors';
-
-const app = express();
-app.use(express.json());
-app.use(cors());
+import { cors, runMiddleware } from './_cors';
 
 // ===== User Store (replace with DB in production) =====
 type User = {
@@ -38,85 +34,62 @@ let transactions: Transaction[] = [
   { id: 6, date: '2024-03-09', customer: 'Golf Digest', description: 'Marketing Sponsorship', amount: 500.0, status: 'completed', type: 'income', category: 'marketing', course: '' },
 ];
 
-// ===== JWT Secret =====
 const JWT_SECRET = 'your-very-secure-secret';
 
-// ===== Auth Middleware =====
-interface AuthRequest extends Request {
-  user?: { username: string };
-}
-function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
-  const authHeader = req.headers['authorization'];
-  if (!authHeader) return res.sendStatus(401);
+function verifyToken(req: NextApiRequest): string | null {
+  const authHeader = req.headers.authorization || req.headers['Authorization'];
+  if (!authHeader || typeof authHeader !== 'string') return null;
   const token = authHeader.split(' ')[1];
-  if (!token) return res.sendStatus(401);
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user as { username: string };
-    next();
-  });
+  if (!token) return null;
+  try {
+    jwt.verify(token, JWT_SECRET);
+    return token;
+  } catch {
+    return null;
+  }
 }
 
-// ===== Login Route =====
-app.post('/api/accounting/login', async (req: Request, res: Response) => {
-  const { username, password } = req.body;
-  if (username !== adminUser.username) return res.status(401).json({ message: 'Invalid credentials' });
-  const valid = await bcrypt.compare(password, adminUser.passwordHash);
-  if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  await runMiddleware(req, res, cors);
 
-  // Create JWT
-  const token = jwt.sign({ username: adminUser.username }, JWT_SECRET, { expiresIn: '2h' });
-  res.json({ token });
-});
+  // Login
+  if (req.method === 'POST' && req.url?.includes('login')) {
+    const { username, password } = req.body;
+    if (username !== adminUser.username) return res.status(401).json({ message: 'Invalid credentials' });
+    const valid = await bcrypt.compare(password, adminUser.passwordHash);
+    if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
+    const token = jwt.sign({ username: adminUser.username }, JWT_SECRET, { expiresIn: '2h' });
+    return res.json({ token });
+  }
 
-// ===== Change Password Route =====
-app.post('/api/accounting/change-password', authenticateToken, async (req: AuthRequest, res: Response) => {
-  const { oldPassword, newPassword } = req.body;
-  const valid = await bcrypt.compare(oldPassword, adminUser.passwordHash);
-  if (!valid) return res.status(401).json({ message: 'Old password incorrect' });
+  // Change Password
+  if (req.method === 'POST' && req.url?.includes('change-password')) {
+    const token = verifyToken(req);
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    const { oldPassword, newPassword } = req.body;
+    const valid = await bcrypt.compare(oldPassword, adminUser.passwordHash);
+    if (!valid) return res.status(401).json({ message: 'Old password incorrect' });
+    adminUser.passwordHash = await bcrypt.hash(newPassword, 10);
+    return res.json({ message: 'Password changed successfully' });
+  }
 
-  adminUser.passwordHash = await bcrypt.hash(newPassword, 10);
-  res.json({ message: 'Password updated successfully.' });
-});
+  // Get Transactions
+  if (req.method === 'GET' && req.url?.includes('transactions')) {
+    const token = verifyToken(req);
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    return res.json(transactions);
+  }
 
-// ===== Get Accounting Summary =====
-app.get('/api/accounting/summary', authenticateToken, (req: AuthRequest, res: Response) => {
-  const completed = transactions.filter(t => t.status === 'completed');
-  const totalRevenue = completed.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-  const marketingRevenue = completed.filter(t => t.category === 'marketing').reduce((sum, t) => sum + t.amount, 0);
+  // Add Transaction
+  if (req.method === 'POST' && req.url?.includes('transactions')) {
+    const token = verifyToken(req);
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    const { date, customer, description, amount, status, type, category, course } = req.body;
+    const id = transactions.length + 1;
+    const transaction: Transaction = { id, date, customer, description, amount, status, type, category, course };
+    transactions.push(transaction);
+    return res.json(transaction);
+  }
 
-  // Revenue per course
-  let revenueByCourse: Record<string, number> = {};
-  completed.forEach(t => {
-    if (t.type === 'income' && t.course) {
-      revenueByCourse[t.course] = (revenueByCourse[t.course] || 0) + t.amount;
-    }
-  });
-
-  // Expenses
-  const totalExpenses = completed.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-
-  res.json({
-    totalRevenue,
-    revenueByCourse,
-    marketingRevenue,
-    totalExpenses,
-    netProfit: totalRevenue - totalExpenses,
-    transactions: completed
-  });
-});
-
-// ===== Add Transaction =====
-app.post('/api/accounting/transaction', authenticateToken, (req: AuthRequest, res: Response) => {
-  const { date, customer, description, amount, status, type, category, course } = req.body;
-  const id = transactions.length + 1;
-  transactions.push({ id, date, customer, description, amount, status, type, category, course });
-  res.json({ message: 'Transaction added', id });
-});
-
-// ===== Start Server =====
-const PORT = process.env.PORT || 3033;
-app.listen(PORT, () => {
-  console.log(`Accounting backend running on http://localhost:${PORT}`);
-});
+  return res.status(405).json({ error: 'Method not allowed' });
+}

@@ -26,6 +26,20 @@ const claimSchema = new mongoose.Schema({
   wallet_address: String,
   mediaUrl: String,
   clubId: String,
+  videoRef: String, // <-- Accept videoRef from frontend
 });
 
 export const Claim = mongoose.models.Claim || mongoose.model("Claim", claimSchema);
+
+const playerSchema = new mongoose.Schema({
+  playerName: String,
+  playerEmail: String,
+  playerPhone: String,
+  handicap: Number,
+  clubId: String,
+  awards: [{ type: String }],
+  coursesPlayed: [{ type: String }],
+  points: { type: Number, default: 0 },
+});
+
+export const Player = mongoose.models.Player || mongoose.model("Player", playerSchema);

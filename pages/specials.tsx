@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import AdminLayout from '../components/AdminLayout';
+import Link from 'next/link';
 
 
 interface Special {
@@ -120,12 +121,12 @@ export default function Specials() {
                     <div className="max-w-7xl mx-auto px-4">
                         <div className="flex justify-between h-16">
                             <div className="flex items-center">
-                                <a href="/dashboard">← Back to Dashboard</a>
-                                <h1 className="text-xl font-bold text-gray-800">Special Offers</h1>
+                                <Link href="/dashboard" className="mr-4 text-blue-600 hover:underline">← Back to Dashboard</Link>
+                                <h1 className="text-xl font-bold text-gray-800">Customer Management</h1>
                             </div>
                             <div className="flex items-center space-x-4">
-                                <a href="/dashboard">Dashboard</a>
-                                <a href="/login">Logout</a>
+                                <Link href="/dashboard" className="text-blue-600 hover:underline">Dashboard</Link>
+                                <Link href="/login" className="text-blue-600 hover:underline">Logout</Link>
                             </div>
                         </div>
                     </div>

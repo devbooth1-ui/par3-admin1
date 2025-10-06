@@ -1,7 +1,19 @@
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import AdminLayout from '../components/AdminLayout'
 import Link from 'next/link'
 
 export default function Home() {
+  const router = useRouter();
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/login');
+      }
+    }
+  }, []);
+
   return (
     <AdminLayout>
       <div className="min-h-screen bg-gray-50 p-8">

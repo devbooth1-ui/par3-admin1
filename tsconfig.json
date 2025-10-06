@@ -8,7 +8,7 @@
     ],
     "module": "commonjs",
     "allowJs": false,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "strict": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
@@ -26,7 +26,8 @@
     "noUnusedParameters": true,
     "types": [
       "node"
-    ]
+    ],
+    "incremental": true
   },
   "include": [
     "components/**/*",

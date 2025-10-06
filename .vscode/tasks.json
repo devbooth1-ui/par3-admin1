@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Check MongoDB and Next.js server status",
+			"command": "docker ps && curl -I http://localhost:3000/api/players",
+			"args": [],
+			"group": "check",
+			"isBackground": false
+		}
+	]
+}

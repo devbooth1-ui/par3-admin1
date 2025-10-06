@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useRouter } from 'next/router';
 import AdminLayout from '../components/AdminLayout';
+import Link from 'next/link';
 
 
 export default function Settings() {
@@ -51,12 +52,12 @@ export default function Settings() {
                         <div className="max-w-7xl mx-auto px-4">
                             <div className="flex justify-between h-16">
                                 <div className="flex items-center">
-                                    <a href="/dashboard">← Back to Dashboard</a>
+                                    <Link href="/dashboard" className="mr-4">← Back to Dashboard</Link>
                                     <h1 className="text-xl font-bold text-gray-800">Admin Settings</h1>
                                 </div>
                                 <div className="flex items-center space-x-4">
-                                    <a href="/dashboard">Dashboard</a>
-                                    <a href="/login">Logout</a>
+                                    <Link href="/dashboard">Dashboard</Link>
+                                    <Link href="/login">Logout</Link>
                                 </div>
                             </div>
                         </div>

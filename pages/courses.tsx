@@ -1,8 +1,17 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
+// Define a type for course
+interface Course {
+  name: string;
+  holeNumber?: number;
+  yardage?: number;
+  phone?: string;
+  email?: string;
+}
+
 export default function CoursesPage() {
-  const [courses, setCourses] = useState([]);
+  const [courses, setCourses] = useState<Course[]>([]);
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("courses") || "[]");
@@ -23,6 +32,10 @@ export default function CoursesPage() {
       </nav>
 
       <h1 className="text-xl font-bold mb-4">Courses</h1>
+      {/* Global Go to CRM link above the course list */}
+      <div className="mb-4 text-right">
+        <Link href="/crm" className="bg-blue-500 text-white px-3 py-1 rounded cursor-pointer hover:bg-blue-600 inline-block">Go to CRM</Link>
+      </div>
       <div>
         {courses.length === 0 ? (
           <div className="text-center text-gray-500">No courses added yet.</div>
@@ -33,7 +46,7 @@ export default function CoursesPage() {
                 <div>
                   <div className="font-semibold text-blue-900">{course.name}</div>
                   <div className="text-xs text-gray-600">
-                    Hole: {course.holeNumber} | Yardage: {course.yardage}
+                    Hole: {course.holeNumber || "N/A"} | Yardage: {course.yardage || "N/A"}
                   </div>
                   <div className="text-xs text-gray-600">
                     Phone: {course.phone || "N/A"}
@@ -42,12 +55,8 @@ export default function CoursesPage() {
                 </div>
                 {/* Action Links */}
                 <div className="flex space-x-2 mt-2 sm:mt-0">
-                  <Link href={`/courses/${idx}/crm`}>
-                    <button className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-semibold">CRM</button>
-                  </Link>
-                  <Link href={`/courses/${idx}/accounting`}>
-                    <button className="bg-green-600 text-white px-2 py-1 rounded text-xs font-semibold">Accounting</button>
-                  </Link>
+                  <Link href={{ pathname: '/crm', query: { course: idx } }} className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-semibold">CRM</Link>
+                  <Link href={`/courses/${idx}/accounting`} className="bg-green-600 text-white px-2 py-1 rounded text-xs font-semibold">Accounting</Link>
                 </div>
               </div>
             ))}

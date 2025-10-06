@@ -1,38 +1,54 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import AdminLayout from '../components/AdminLayout';
 
+// Claim type
+interface Claim {
+  _id?: string;
+  id?: string;
+  playerEmail: string;
+  course: string;
+  date: string;
+  status: 'pending' | 'verified' | 'rejected';
+  videoRef?: string;
+}
+
 export default function ClaimsPage() {
-  const [claims, setClaims] = useState([]);
-  const [loading, setLoading] = useState(true)
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'pending' | 'verified' | 'rejected' | 'all'>('pending');
 
   useEffect(() => {
-    // Fetch claims from backend API
-    const fetchClaims = async () => {
-      setLoading(true)
-      try {
-        const res = await fetch("/api/claims");
-        const data = await res.json();
-        setClaims(data);
-      } catch (error) {
-        console.error('Failed to fetch claims:', error)
-        setClaims([])
-      } finally {
-        setLoading(false)
-      }
-    };
-    fetchClaims();
+    fetch('/api/claims')
+      .then(res => res.json())
+      .then(data => {
+        setClaims(Array.isArray(data.claims) ? data.claims : Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setClaims([]);
+        setLoading(false);
+      });
   }, []);
 
-  // Handler to verify/reject claims
-  const updateStatus = async (id, status) => {
+  // Filter claims by status
+  const filteredClaims = claims.filter((claim: Claim) => {
+    if (filter === 'all') return true;
+    return claim.status === filter;
+  });
+
+  // Handler to verify/reject claims and send notification
+  const updateStatus = async (id: string, status: 'pending' | 'verified' | 'rejected') => {
     await fetch(`/api/claims/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
+    // Optionally send notification to player (pseudo-code)
+    // await fetch(`/api/notifications`, { method: 'POST', body: JSON.stringify({ playerId, status }) });
     // Refresh claims list
     const res = await fetch("/api/claims");
-    setClaims(await res.json());
+    const data = await res.json();
+    setClaims(Array.isArray(data.claims) ? data.claims : Array.isArray(data) ? data : []);
   };
 
   if (loading) {
@@ -52,36 +68,31 @@ export default function ClaimsPage() {
     <AdminLayout>
       <div className="max-w-3xl mx-auto py-8 px-2">
         <h1 className="text-2xl font-bold mb-6">Claims Verification</h1>
+        <div className="mb-4 flex gap-2">
+          <button className={`px-3 py-1 rounded ${filter==='pending'?'bg-blue-500 text-white':'bg-gray-200'}`} onClick={()=>setFilter('pending')}>Pending</button>
+          <button className={`px-3 py-1 rounded ${filter==='verified'?'bg-green-500 text-white':'bg-gray-200'}`} onClick={()=>setFilter('verified')}>Verified</button>
+          <button className={`px-3 py-1 rounded ${filter==='rejected'?'bg-red-500 text-white':'bg-gray-200'}`} onClick={()=>setFilter('rejected')}>Rejected</button>
+          <button className={`px-3 py-1 rounded ${filter==='all'?'bg-black text-white':'bg-gray-200'}`} onClick={()=>setFilter('all')}>All</button>
+        </div>
         <div className="space-y-4">
-          {claims.length === 0 ? (
+          {filteredClaims.length === 0 ? (
             <div className="text-center text-gray-500">No claims to review.</div>
           ) : (
-            claims.map((claim) => (
-              <div key={claim.id} className="bg-white rounded shadow p-4 flex flex-col sm:flex-row sm:items-center justify-between">
+            filteredClaims.map((claim) => (
+              <div key={claim._id || claim.id} className="bg-white rounded shadow p-4 flex flex-col sm:flex-row sm:items-center justify-between">
                 <div>
-                  <div className="font-semibold text-blue-900">{claim.playerName} ({claim.playerEmail})</div>
-                  <div className="text-xs text-gray-600">
-                    Outfit: {claim.outfitDescription}<br />
-                    Date: {claim.teeDate} Time: {claim.teeTime}<br />
-                    Course: {claim.course} Hole: {claim.hole}<br />
-                    Payment: {claim.paymentMethod}
-                  </div>
-                  <div className="text-xs font-semibold mt-2">
-                    Status: <span className={claim.status === "verified" ? "text-green-600" : claim.status === "rejected" ? "text-red-600" : "text-yellow-600"}>{claim.status}</span>
-                  </div>
+                  <div><strong>Player:</strong> {claim.playerEmail}</div>
+                  <div><strong>Course:</strong> {claim.course}</div>
+                  <div><strong>Date:</strong> {claim.date}</div>
+                  <div><strong>Status:</strong> <span className={`font-bold ${claim.status==='verified'?'text-green-600':claim.status==='rejected'?'text-red-600':'text-yellow-600'}`}>{claim.status}</span></div>
+                  {claim.videoRef && <div><strong>Video:</strong> <a href={claim.videoRef} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a></div>}
                 </div>
-                <div className="flex flex-col space-y-2 mt-2 sm:mt-0 sm:ml-4">
-                  {claim.status === "pending" && (
-                    <>
-                      <button className="bg-green-600 text-white px-3 py-1 rounded text-xs font-semibold"
-                        onClick={() => updateStatus(claim.id, "verified")}>
-                        Verify
-                      </button>
-                      <button className="bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold"
-                        onClick={() => updateStatus(claim.id, "rejected")}>
-                        Reject
-                      </button>
-                    </>
+                <div className="flex gap-2 mt-2 sm:mt-0">
+                  {claim.status === 'pending' && (claim._id || claim.id) && (
+                    <button className="bg-green-500 text-white px-3 py-1 rounded" onClick={()=>updateStatus((claim._id ?? claim.id)!, 'verified')}>Verify</button>
+                  )}
+                  {claim.status === 'pending' && (claim._id || claim.id) && (
+                    <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={()=>updateStatus((claim._id ?? claim.id)!, 'rejected')}>Reject</button>
                   )}
                 </div>
               </div>

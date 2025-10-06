@@ -68,6 +68,7 @@ export default function Verification() {
     const [selectedStatus, setSelectedStatus] = useState('all');
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
 
     const filteredUsers = users.filter(user => {
         return selectedStatus === 'all' || user.verificationStatus === selectedStatus;
@@ -98,17 +99,19 @@ export default function Verification() {
 
     const handleApprove = () => {
         if (selectedUser) {
-            alert(`User ${selectedUser.name} has been verified successfully!`);
+            setConfirmationMessage(`Your claim has been sent and is being verified.`);
             setShowReviewModal(false);
             setSelectedUser(null);
+            setTimeout(() => setConfirmationMessage(null), 3000);
         }
     };
 
     const handleReject = () => {
         if (selectedUser) {
-            alert(`User ${selectedUser.name} verification has been rejected.`);
+            setConfirmationMessage(`Your claim has been rejected.`);
             setShowReviewModal(false);
             setSelectedUser(null);
+            setTimeout(() => setConfirmationMessage(null), 3000);
         }
     };
 
@@ -417,6 +420,13 @@ export default function Verification() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* Confirmation Message */}
+                {confirmationMessage && (
+                    <div className="fixed top-8 right-8 bg-blue-600 text-white px-6 py-4 rounded shadow-lg z-50">
+                        {confirmationMessage}
                     </div>
                 )}
             </div>

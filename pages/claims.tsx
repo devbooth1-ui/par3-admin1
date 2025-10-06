@@ -94,6 +94,21 @@ export default function ClaimsPage() {
                   {claim.status === 'pending' && (claim._id || claim.id) && (
                     <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={()=>updateStatus((claim._id ?? claim.id)!, 'rejected')}>Reject</button>
                   )}
+                  {(claim._id || claim.id) && (
+                    <button className="bg-gray-500 text-white px-3 py-1 rounded" onClick={async () => {
+                      if (!window.confirm('Delete this claim?')) return;
+                      const res = await fetch('/api/claims', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ _id: claim._id ?? claim.id }),
+                      });
+                      if (res.ok) {
+                        setClaims(claims => claims.filter(c => (c._id ?? c.id) !== (claim._id ?? claim.id)));
+                      } else {
+                        alert('Failed to delete claim');
+                      }
+                    }}>Delete</button>
+                  )}
                 </div>
               </div>
             ))

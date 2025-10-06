@@ -14,7 +14,7 @@ interface Player {
   qualifiedForMillion?: boolean;
 }
 
-function PlayerCard({ player }: { player: Player }) {
+function PlayerCard({ player, onDelete }: { player: Player, onDelete: (_id: string) => void }) {
   const [showDetails, setShowDetails] = useState(false);
   const lastCourse = player.coursesPlayed?.[player.coursesPlayed.length - 1] || 'N/A';
   const lastAward = player.awards?.[player.awards.length - 1] || 'N/A';
@@ -39,6 +39,9 @@ function PlayerCard({ player }: { player: Player }) {
       </div>
       <button className="mt-2 bg-blue-500 text-white px-4 py-2 rounded" onClick={() => setShowDetails(!showDetails)}>
         {showDetails ? 'Hide Details' : 'View More'}
+      </button>
+      <button className="mt-2 bg-red-500 text-white px-4 py-2 rounded ml-2" onClick={() => onDelete(player._id)}>
+        Delete
       </button>
       {showDetails && (
         <div className="mt-2">
@@ -66,6 +69,20 @@ export default function Players() {
       });
   }, []);
 
+  const handleDelete = async (_id: string) => {
+    if (!window.confirm('Delete this player?')) return;
+    const res = await fetch('/api/players', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _id }),
+    });
+    if (res.ok) {
+      setPlayers(players => players.filter(p => p._id !== _id));
+    } else {
+      alert('Failed to delete player');
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="min-h-screen bg-gray-50 p-8">
@@ -76,7 +93,7 @@ export default function Players() {
           players.length === 0 ? (
             <p className="mb-6 text-gray-600">No players found.</p>
           ) : (
-            players.map(player => <PlayerCard key={player._id} player={player} />)
+            players.map(player => <PlayerCard key={player._id} player={player} onDelete={handleDelete} />)
           )
         )}
       </div>

@@ -14,6 +14,11 @@ async function connectToDatabase() {
     return client;
 }
 
+// Simple email validation regex
+function isValidEmail(email: string) {
+    return /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email);
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     await runMiddleware(req, res, cors);
 
@@ -35,9 +40,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === 'POST') {
         const { name, email, phone, stats, claim, courseId } = req.body;
         const normalizedEmail = (email || '').toLowerCase().trim();
-        if (!name || !normalizedEmail) {
-            return res.status(400).json({ error: 'Missing required fields: name, email' });
+
+        // Validate required fields
+        if (!name || !normalizedEmail || !isValidEmail(normalizedEmail)) {
+            return res.status(400).json({ error: 'Missing or invalid required fields: name, email' });
         }
+
         try {
             let player = await players.findOne({ email: normalizedEmail });
 

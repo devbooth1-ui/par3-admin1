@@ -435,9 +435,12 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
     // Get dynamic pricing from backend
     getCoursePricing: async (courseId = 'wentworth-gc') => {
         try {
+            // Try to get course pricing, but gracefully handle errors
             const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/courses`);
+            
+            // If 405 or other error, use default pricing
             if (!response.ok) {
-                // Fallback to default pricing
+                console.log('📋 Using default pricing (backend returned:', response.status, ')');
                 return {
                     game_fee: 8.00,
                     currency: 'USD',

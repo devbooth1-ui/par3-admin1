@@ -1,5 +1,10 @@
 // API Configuration for connecting to admin services
-const ADMIN_API_BASE = 'https://par3-admin1.vercel.app'; // Always use the deployed backend
+// Use proxy in development, direct URL in production
+const ADMIN_API_BASE = import.meta.env.DEV 
+    ? '/api' // This will be proxied by Vite to par3-admin1.vercel.app
+    : 'https://par3-admin1.vercel.app'; // Direct URL for production
+
+console.log('🔗 Using API Base:', ADMIN_API_BASE, '(DEV mode:', import.meta.env.DEV, ')');
 
 // CORS-aware fetch wrapper
 const corsAwareFetch = async (url, options = {}) => {
@@ -17,7 +22,7 @@ const corsAwareFetch = async (url, options = {}) => {
             mode: 'cors'
         };
 
-        const response = await corsAwareFetch(url, corsOptions);
+        const response = await fetch(url, corsOptions);
         return response;
     } catch (error) {
         console.log('🔄 CORS Error detected, trying alternative approach:', error.message);
@@ -25,7 +30,7 @@ const corsAwareFetch = async (url, options = {}) => {
         // If CORS fails, try with no-cors mode for GET requests
         if (options.method === 'GET' || !options.method) {
             try {
-                const fallbackResponse = await corsAwareFetch(url, {
+                const fallbackResponse = await fetch(url, {
                     ...options,
                     mode: 'no-cors'
                 });

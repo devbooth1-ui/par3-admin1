@@ -23,6 +23,7 @@ import TournamentSignup from "./pages/TournamentSignup.jsx";
 import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import AdminPortal from "./pages/AdminPortalSimple.jsx";
 import TestClaims from "./pages/TestClaims.jsx";
+import PlayerManagementPreview from "./pages/PlayerManagementPreview.jsx";
 
 
 export default function App() {
@@ -59,6 +60,7 @@ export default function App() {
       <Route path="/terms" element={<TermsAndConditions />} />
       <Route path="/admin" element={<AdminPortal />} />
       <Route path="/test-claims" element={<TestClaims />} />
+      <Route path="/player-preview" element={<PlayerManagementPreview />} />
     </Routes>
   );
 }

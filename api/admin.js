@@ -21,6 +21,7 @@ let users = [
 ];
 
 let claims = [];
+let players = [];
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {

@@ -5,7 +5,7 @@ import { Elements, CardElement, useStripe, useElements } from "@stripe/react-str
 // Replace with your Stripe publishable key
 const stripePromise = loadStripe("pk_test_12345");
 
-function CheckoutForm({ onApproved }) {
+function CheckoutForm({ onApproved, pricing = { display_price: '$8.00' } }) {
     const stripe = useStripe();
     const elements = useElements();
     const [processing, setProcessing] = React.useState(false);
@@ -34,7 +34,7 @@ function CheckoutForm({ onApproved }) {
                 disabled={!stripe || processing}
                 className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full mt-2"
             >
-                {processing ? "Processing..." : "Pay $8.00"}
+                {processing ? "Processing..." : `Pay ${pricing.display_price}`}
             </button>
             {error && <div className="text-red-500 text-sm">{error}</div>}
             {success && <div className="text-green-400 text-sm">Payment simulated! (No backend yet)</div>}
@@ -42,10 +42,10 @@ function CheckoutForm({ onApproved }) {
     );
 }
 
-export default function StripeDemoForm({ onApproved }) {
+export default function StripeDemoForm({ onApproved, pricing }) {
     return (
         <Elements stripe={stripePromise}>
-            <CheckoutForm onApproved={onApproved} />
+            <CheckoutForm onApproved={onApproved} pricing={pricing} />
         </Elements>
     );
 }

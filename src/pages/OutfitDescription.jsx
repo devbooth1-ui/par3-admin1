@@ -1,20 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ConfettiEffect from "../components/ConfettiEffect";
 import { useLocation, useNavigate } from "react-router-dom";
-
-async function sendClaimEmail(claimData) {
-  const response = await fetch("https://par3-admin1.vercel.app/api/send-email", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(claimData)
-  });
-  const result = await response.json();
-  if (response.ok) {
-    alert("Claim sent! Response: " + JSON.stringify(result));
-  } else {
-    alert("Claim failed: " + (result.error || "Unknown error"));
-  }
-}
+import { adminAPI } from "../utils/adminAPI";
 
 export default function OutfitDescription() {
   const { state } = useLocation();
@@ -51,22 +38,30 @@ export default function OutfitDescription() {
       return;
     }
 
-    const claimData = {
-      claimType,
-      playerName,
-      playerEmail,
-      playerPhone,
-      outfitDescription,
-      teeDate,
-      teeTime,
-      courseName
+    // Prepare player data for adminAPI
+    const playerData = {
+      firstName: playerName.split(" ")[0] || "",
+      lastName: playerName.split(" ").slice(1).join(" ") || "",
+      email: playerEmail,
+      phone: playerPhone
     };
 
-    console.log("Sending claimData:", claimData);
+    const teeTimeFormatted = `${teeDate} ${teeTime}`;
+
+    console.log("Submitting claim via adminAPI:", { playerData, claimType, outfitDescription, teeTimeFormatted });
 
     try {
-      await sendClaimEmail(claimData);
+      let result;
+      
+      if (claimType === "birdie") {
+        result = await adminAPI.submitBirdieClaim(playerData, outfitDescription, teeTimeFormatted);
+      } else if (claimType === "hole-in-one") {
+        result = await adminAPI.submitHoleInOneClaim(playerData, 'card', outfitDescription, teeTimeFormatted);
+      }
 
+      console.log("Claim submission result:", result);
+
+      // Update local stats
       let stats = JSON.parse(localStorage.getItem("playerStats") || "{}");
       if (claimType === "birdie") {
         stats.totalPoints = (stats.totalPoints || 0) + 200;
@@ -74,15 +69,31 @@ export default function OutfitDescription() {
       } else if (claimType === "hole-in-one") {
         stats.totalPoints = (stats.totalPoints || 0) + 1000;
         stats.lastReward = "Hole-in-One";
+        stats.tournamentQualified = true;
       }
       stats.lastDate = new Date().toLocaleDateString();
+      stats.totalRounds = (stats.totalRounds || 0) + 1;
       localStorage.setItem("playerStats", JSON.stringify(stats));
 
-      alert("Your submission is under review. You will receive an email when your hole has been reviewed by our team.");
+      // Sync stats to backend
+      try {
+        await adminAPI.syncPlayerStats(playerData, stats);
+        console.log("Stats synced to backend successfully");
+      } catch (error) {
+        console.error("Failed to sync stats to backend:", error);
+      }
+
+      if (result && result.error) {
+        alert(`Claim submitted but may need review: ${result.error}`);
+      } else {
+        alert("Your claim has been submitted successfully! You will receive an email confirmation and further instructions from our team.");
+      }
+
       navigate("/myscorecard", {
         state: { prize: state.prize, outfitDescription, teeDate, teeTime },
       });
     } catch (error) {
+      console.error("Claim submission failed:", error);
       setError("Claim submission failed. Please contact support.");
     }
   };

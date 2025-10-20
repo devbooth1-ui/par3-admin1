@@ -2,7 +2,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-
 const awards = [
   {
     title: "🏆 Hole-in-Won",
@@ -40,28 +39,32 @@ export default function Awards() {
       <div className="w-full max-w-md px-2 mb-2 mt-2 flex justify-start relative z-10">
         <span className="bg-white bg-opacity-95 rounded-xl px-3 py-2 text-base sm:text-lg font-bold text-gray-900 shadow-md">The Awards</span>
       </div>
-      <ul className="space-y-3 relative z-10 w-full max-w-md px-1 sm:px-2">
+      <ul className="space-y-4 relative z-10 w-full max-w-md px-1 sm:px-2">
         {awards.map((award, idx) => (
-          <li key={idx} className="border-l-4 border-green-500 pl-2 py-2 bg-white bg-opacity-90 rounded-xl shadow-2xl">
-            <div className="text-base sm:text-lg font-semibold text-green-700 flex items-center">
+          <li key={idx} className="border-l-4 border-green-500 pl-3 py-3 bg-white bg-opacity-95 rounded-xl shadow-xl">
+            <div className="text-base sm:text-lg font-semibold text-green-700 flex items-center mb-1">
               {award.title}
               {award.title === "🥈 Par" && (
-                <span className="text-xs ml-1 font-bold bg-gradient-to-r from-orange-400 to-orange-600 text-transparent bg-clip-text">(or not up to par)</span>
+                <span className="text-xs ml-2 font-bold bg-gradient-to-r from-orange-400 to-orange-600 text-transparent bg-clip-text">
+                  (or not up to par)
+                </span>
               )}
             </div>
-            <div className="text-gray-800 font-semibold text-xs sm:text-sm ml-1">{award.description}</div>
+            <div className="text-gray-800 font-medium text-xs sm:text-sm ml-1">
+              {award.description}
+            </div>
           </li>
         ))}
       </ul>
-      <div className="flex flex-col gap-2 mt-4 justify-center relative z-10 w-full max-w-md px-1 sm:px-2">
+      <div className="flex flex-col gap-3 mt-6 justify-center relative z-10 w-full max-w-md px-1 sm:px-2">
         <button
-          className="px-3 py-1.5 sm:px-4 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition text-sm sm:text-base"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
           onClick={() => navigate("/tournament")}
         >
           Tournament Details
         </button>
         <button
-          className="px-4 py-2 sm:px-6 bg-green-600 text-white rounded-xl font-bold shadow hover:bg-green-700 transition text-base sm:text-lg mt-2"
+          className="px-4 py-2 bg-green-600 text-white rounded-lg font-bold shadow-lg hover:bg-green-700 transition-colors text-base sm:text-lg"
           onClick={() => navigate("/payment")}
         >
           Tee it up!

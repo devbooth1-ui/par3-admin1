@@ -46,17 +46,37 @@ export default function HowdWeDo() {
     });
   };
 
-  // Par/Bogey: submit immediately
-  const handleParOrShankClick = (scoreType, reward, points) => {
-    const playerData = {
-      playerName,
-      playerEmail,
-      courseId,
-      hole,
-      claimType: scoreType.toLowerCase(),
-      points
-    };
-    adminAPI.submitClaim(playerData);
+  // Par/Bogey: update stats and navigate (these don't need backend claims)
+  const handleParOrShankClick = async (scoreType, reward, points) => {
+    // Update local stats
+    let stats = JSON.parse(localStorage.getItem("playerStats") || "{}");
+    stats.totalPoints = (stats.totalPoints || 0) + points;
+    stats.lastReward = scoreType;
+    stats.lastDate = new Date().toLocaleDateString();
+    stats.totalRounds = (stats.totalRounds || 0) + 1;
+    
+    if (scoreType === "Par" && (!stats.bestScore || stats.bestScore === "N/A" || stats.bestScore > 3)) {
+      stats.bestScore = 3;
+    } else if (scoreType === "Bogey" && (!stats.bestScore || stats.bestScore === "N/A" || stats.bestScore > 4)) {
+      stats.bestScore = 4;
+    }
+    
+    localStorage.setItem("playerStats", JSON.stringify(stats));
+    
+    // Sync stats to backend
+    try {
+      const playerData = {
+        firstName: playerName.split(" ")[0] || "",
+        lastName: playerName.split(" ").slice(1).join(" ") || "",
+        email: playerEmail,
+        phone: localStorage.getItem("playerPhone") || ""
+      };
+      await adminAPI.syncPlayerStats(playerData, stats);
+      console.log("Stats synced to backend for", scoreType);
+    } catch (error) {
+      console.error("Failed to sync stats to backend:", error);
+    }
+    
     navigate("/myscorecard", { state: { prize: null, scoreType, points } });
   };
 

@@ -15,3 +15,4 @@ export { default as Profile } from './Profile';
 export { default as Challenge } from './Challenge';
 export { default as OrderForm } from './OrderForm';
 export { default as ThanksForPlaying } from './ThanksForPlaying';
+export { default as PlayerManagementPreview } from './PlayerManagementPreview';

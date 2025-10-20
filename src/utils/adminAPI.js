@@ -1,7 +1,5 @@
 // API Configuration for connecting to admin services
-const ADMIN_API_BASE = process.env.NODE_ENV === 'production'
-    ? 'https://par3-admin1.vercel.app' // <-- your actual Vercel admin portal URL
-    : 'http://localhost:3001';
+const ADMIN_API_BASE = 'https://par3-admin1.vercel.app'; // Always use the deployed backend
 
 // API functions for admin communication
 export const adminAPI = {
@@ -14,20 +12,22 @@ export const adminAPI = {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    claimType: 'birdie',
-                    playerName: `${playerData.firstName} ${playerData.lastName}`,
-                    playerEmail: playerData.email || '',
-                    playerPhone: playerData.phone || '',
-                    outfitDescription: outfitDescription,
-                    teeTime: teeTime,
-                    courseId: 'wentworth-gc',
-                    hole: '1',
-                    paymentMethod: 'card'
+                    player_email: playerData.email || '',
+                    course_id: 'wentworth-gc',
+                    hole: 1,
+                    yards: 130,
+                    claim_type: 'birdie',
+                    player_name: `${playerData.firstName} ${playerData.lastName}`,
+                    player_phone: playerData.phone || '',
+                    outfit_description: outfitDescription,
+                    tee_time: teeTime
                 })
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to submit claim: ${response.status}`);
+                const errorText = await response.text();
+                console.log('❌ Claims API Error Details:', errorText);
+                throw new Error(`Failed to submit claim: ${response.status} - ${errorText}`);
             }
 
             const result = await response.json();
@@ -79,20 +79,23 @@ Admin Portal: https://par3-admin1.vercel.app/claims
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    claimType: 'hole_in_one',
-                    playerName: `${playerData.firstName} ${playerData.lastName}`,
-                    playerEmail: playerData.email || '',
-                    playerPhone: playerData.phone || '',
-                    outfitDescription: outfitDescription,
-                    teeTime: teeTime,
-                    courseId: 'wentworth-gc',
-                    hole: '1',
-                    paymentMethod: paymentMethod || 'card'
+                    player_email: playerData.email || '',
+                    course_id: 'wentworth-gc',
+                    hole: 1,
+                    yards: 130,
+                    claim_type: 'hole_in_one',
+                    player_name: `${playerData.firstName} ${playerData.lastName}`,
+                    player_phone: playerData.phone || '',
+                    outfit_description: outfitDescription,
+                    tee_time: teeTime,
+                    payment_method: paymentMethod || 'card'
                 })
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to submit hole-in-one claim: ${response.status}`);
+                const errorText = await response.text();
+                console.log('❌ Hole-in-One Claims API Error Details:', errorText);
+                throw new Error(`Failed to submit hole-in-one claim: ${response.status} - ${errorText}`);
             }
 
             const result = await response.json();
@@ -133,6 +136,332 @@ Admin Portal: https://par3-admin1.vercel.app/claims
         } catch (error) {
             console.error('Failed to submit hole-in-one claim:', error);
             // Don't break the app if admin portal is down
+            return { error: error.message, offline: true };
+        }
+    },
+
+    // Sync player stats to backend
+    syncPlayerStats: async (playerData, stats) => {
+        try {
+            const response = await fetch(`${ADMIN_API_BASE}/api/players`, {
+                method: 'POST', // Changed from PUT to POST
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: `${playerData.firstName} ${playerData.lastName}`,
+                    email: playerData.email || '',
+                    phone: playerData.phone || '',
+                    stats: stats,
+                    lastUpdated: new Date().toISOString(),
+                    action: 'updateStats' // Tell backend this is a stats update
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to sync stats: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('📊 STATS SYNCED:', result);
+            return result;
+        } catch (error) {
+            console.error('Failed to sync player stats:', error);
+            return { error: error.message, offline: true };
+        }
+    },
+
+    // Register player for tournament
+    registerForTournament: async (tournamentData) => {
+        try {
+            const response = await fetch(`${ADMIN_API_BASE}/api/tournament-registrations`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    playerName: tournamentData.playerName,
+                    playerEmail: tournamentData.playerEmail,
+                    playerPhone: tournamentData.playerPhone || '',
+                    registrationDate: tournamentData.registrationDate,
+                    tournamentId: tournamentData.tournamentId,
+                    status: 'registered',
+                    qualificationPoints: tournamentData.qualificationPoints || 0
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to register for tournament: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('🏆 TOURNAMENT REGISTRATION SUBMITTED:', result);
+
+            // Send immediate email notification to admin
+            await fetch(`${ADMIN_API_BASE}/api/send-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: 'devbooth1@yahoo.com',
+                    subject: '🏆 NEW TOURNAMENT REGISTRATION - Par3 Challenge',
+                    body: `
+🏆 NEW TOURNAMENT REGISTRATION! 🏆
+
+Player: ${tournamentData.playerName}
+Email: ${tournamentData.playerEmail}
+Phone: ${tournamentData.playerPhone || 'Not provided'}
+Registration Date: ${new Date(tournamentData.registrationDate).toLocaleString()}
+Tournament: ${tournamentData.tournamentId}
+
+The player is now registered for the Million Dollar Shootout!
+
+Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
+                    `
+                })
+            });
+
+            return result;
+        } catch (error) {
+            console.error('Failed to register for tournament:', error);
+            return { error: error.message, offline: true };
+        }
+    },
+
+    // Get all tournament registrations (for batch emailing)
+    getTournamentRegistrations: async () => {
+        try {
+            const response = await fetch(`${ADMIN_API_BASE}/api/tournament-registrations`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to get tournament registrations: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('📋 TOURNAMENT REGISTRATIONS RETRIEVED:', result);
+            return result;
+        } catch (error) {
+            console.error('Failed to get tournament registrations:', error);
+            return { error: error.message, offline: true };
+        }
+    },
+
+    // Send batch email to all tournament registrants
+    sendTournamentBatchEmail: async (emailData) => {
+        try {
+            const response = await fetch(`${ADMIN_API_BASE}/api/tournament-batch-email`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    subject: emailData.subject,
+                    body: emailData.body,
+                    tournamentId: emailData.tournamentId || 'million-dollar-tournament'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to send batch email: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('📧 BATCH EMAIL SENT:', result);
+            return result;
+        } catch (error) {
+            console.error('Failed to send batch email:', error);
+            return { error: error.message, offline: true };
+        }
+    },
+
+    // Track payment with course-based accounting
+    trackPaymentWithAccounting: async (paymentData) => {
+        try {
+            const courseId = paymentData.courseId || 'wentworth-gc';
+            const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // 1. Update player record with payment history and saved payment method
+            const playerResponse = await fetch(`${ADMIN_API_BASE}/api/players`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: paymentData.playerName,
+                    email: paymentData.playerEmail,
+                    phone: paymentData.playerPhone || '',
+                    course_id: courseId,
+                    saved_payment_method: paymentData.savePaymentMethod ? paymentData.paymentMethod : null,
+                    payment_history: [{
+                        transaction_id: transactionId,
+                        amount: paymentData.amount,
+                        method: paymentData.paymentMethod,
+                        type: paymentData.transactionType || 'game_payment',
+                        timestamp: new Date().toISOString(),
+                        course_id: courseId
+                    }],
+                    action: 'updatePaymentWithHistory'
+                })
+            });
+
+            // 2. Update course accounting
+            const courseResponse = await fetch(`${ADMIN_API_BASE}/api/courses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    course_id: courseId,
+                    course_name: paymentData.courseName || 'Wentworth Golf Club',
+                    location: paymentData.courseLocation || 'Surrey, UK',
+                    transaction: {
+                        transaction_id: transactionId,
+                        player_email: paymentData.playerEmail,
+                        amount: paymentData.amount,
+                        type: paymentData.transactionType || 'game_payment',
+                        payment_method: paymentData.paymentMethod,
+                        timestamp: new Date().toISOString()
+                    },
+                    action: 'addTransaction'
+                })
+            });
+
+            console.log('💳 PAYMENT TRACKED WITH ACCOUNTING:', {
+                transactionId,
+                courseId,
+                amount: paymentData.amount,
+                playerResponse: playerResponse.status,
+                courseResponse: courseResponse.status
+            });
+
+            return {
+                success: true,
+                transactionId,
+                playerUpdated: playerResponse.ok,
+                courseUpdated: courseResponse.ok
+            };
+
+        } catch (error) {
+            console.error('Failed to track payment with accounting:', error);
+            return { error: error.message, offline: true };
+        }
+    },
+
+    // Get saved payment method for returning players
+    getSavedPaymentMethod: async (playerEmail) => {
+        try {
+            const response = await fetch(`${ADMIN_API_BASE}/api/players`);
+            if (!response.ok) return null;
+            
+            const players = await response.json();
+            const player = players.find(p => p.email === playerEmail);
+            
+            return player?.saved_payment_method || null;
+        } catch (error) {
+            console.error('Failed to get saved payment method:', error);
+            return null;
+        }
+    },
+
+    // Get course revenue summary
+    getCourseRevenue: async (courseId = 'wentworth-gc') => {
+        try {
+            const response = await fetch(`${ADMIN_API_BASE}/api/courses`);
+            if (!response.ok) return null;
+            
+            const courses = await response.json();
+            const course = courses.find(c => c.course_id === courseId);
+            
+            return course?.accounting || {
+                total_revenue: 0,
+                transaction_count: 0,
+                revenue_breakdown: {
+                    game_payments: 0,
+                    events: 0,
+                    merchandise: 0,
+                    other: 0
+                }
+            };
+        } catch (error) {
+            console.error('Failed to get course revenue:', error);
+            return null;
+        }
+    },
+
+    // Get dynamic pricing from backend
+    getCoursePricing: async (courseId = 'wentworth-gc') => {
+        try {
+            const response = await fetch(`${ADMIN_API_BASE}/api/courses`);
+            if (!response.ok) {
+                // Fallback to default pricing
+                return {
+                    game_fee: 8.00,
+                    currency: 'USD',
+                    display_price: '$8.00'
+                };
+            }
+            
+            const courses = await response.json();
+            const course = courses.find(c => c.course_id === courseId);
+            
+            if (course?.pricing) {
+                return {
+                    ...course.pricing,
+                    display_price: `$${course.pricing.game_fee.toFixed(2)}`
+                };
+            }
+            
+            // Fallback to default
+            return {
+                game_fee: 8.00,
+                currency: 'USD',
+                display_price: '$8.00'
+            };
+            
+        } catch (error) {
+            console.error('Failed to get pricing:', error);
+            // Fallback to default pricing
+            return {
+                game_fee: 8.00,
+                currency: 'USD',
+                display_price: '$8.00'
+            };
+        }
+    },
+
+    // Update course pricing (admin function)
+    updateCoursePricing: async (courseId, newPrice) => {
+        try {
+            const response = await fetch(`${ADMIN_API_BASE}/api/courses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    course_id: courseId,
+                    pricing: {
+                        game_fee: parseFloat(newPrice),
+                        currency: 'USD',
+                        last_updated: new Date().toISOString()
+                    },
+                    action: 'updatePricing'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to update pricing: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('💰 PRICING UPDATED:', { courseId, newPrice, result });
+            
+            return {
+                success: true,
+                courseId,
+                newPrice: parseFloat(newPrice),
+                display_price: `$${parseFloat(newPrice).toFixed(2)}`
+            };
+
+        } catch (error) {
+            console.error('Failed to update pricing:', error);
             return { error: error.message, offline: true };
         }
     }

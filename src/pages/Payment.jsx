@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import StripeDemoForm from "../assets/StripeDemoForm";
 import { useNavigate } from "react-router-dom";
+import { adminAPI } from "../utils/adminAPI";
 
 
 export default function Payment() {
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [savePaymentMethod, setSavePaymentMethod] = useState(false);
   const [cardApproved, setCardApproved] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [savedMethod, setSavedMethod] = useState(null);
+  const [pricing, setPricing] = useState({ game_fee: 8.00, display_price: '$8.00' });
   const videoRef = useRef(null);
   const playerName = localStorage.getItem("playerName") || "Player";
   const firstName = playerName.split(" ")[0];
@@ -17,15 +21,30 @@ export default function Payment() {
   const isReturningPlayer = localStorage.getItem("isReturningPlayer") === "true";
 
   useEffect(() => {
-    // If not a returning player, clear lastPaymentMethod
-    if (!isReturningPlayer) {
-      localStorage.removeItem("lastPaymentMethod");
-    }
-    // Auto-select last payment method if available and returning
-    if (isReturningPlayer && lastPaymentMethod && !paymentMethod) {
-      setPaymentMethod("same");
-    }
-  }, [isReturningPlayer, lastPaymentMethod, paymentMethod]);
+    // Load pricing and saved payment method from backend
+    const loadBackendData = async () => {
+      // Load dynamic pricing
+      const coursePricing = await adminAPI.getCoursePricing('wentworth-gc');
+      setPricing(coursePricing);
+      
+      // Load saved payment method for returning players
+      if (isReturningPlayer) {
+        const playerEmail = localStorage.getItem("playerEmail");
+        if (playerEmail) {
+          const saved = await adminAPI.getSavedPaymentMethod(playerEmail);
+          if (saved) {
+            setSavedMethod(saved);
+            setPaymentMethod("saved");
+          }
+        }
+      } else {
+        // If not a returning player, clear local storage
+        localStorage.removeItem("lastPaymentMethod");
+      }
+    };
+
+    loadBackendData();
+  }, [isReturningPlayer]);
 
   // Force video to play when showVideo becomes true
   useEffect(() => {
@@ -36,12 +55,48 @@ export default function Payment() {
     }
   }, [showVideo]);
 
-  const handleSwingAway = () => {
-    // Store payment method for next time
-    const selectedMethod = paymentMethod === "same" ? lastPaymentMethod : paymentMethod;
-    if (selectedMethod) {
-      localStorage.setItem("lastPaymentMethod", selectedMethod);
+  const handleSwingAway = async () => {
+    // Determine the actual payment method being used
+    const actualMethod = paymentMethod === "saved" ? savedMethod : 
+                        paymentMethod === "same" ? lastPaymentMethod : paymentMethod;
+    
+    // Store payment method locally for immediate fallback
+    if (actualMethod) {
+      localStorage.setItem("lastPaymentMethod", actualMethod);
     }
+
+    // Track payment with course-based accounting
+    try {
+      const playerEmail = localStorage.getItem("playerEmail") || "";
+      const playerPhone = localStorage.getItem("playerPhone") || "";
+      
+      console.log("🚀 Processing payment with course accounting...");
+      
+      const paymentData = {
+        playerName: playerName,
+        playerEmail: playerEmail,
+        playerPhone: playerPhone,
+        paymentMethod: actualMethod,
+        savePaymentMethod: savePaymentMethod,
+        amount: pricing.game_fee,  // Use dynamic pricing
+        transactionType: 'game_payment',
+        courseId: 'wentworth-gc',
+        courseName: 'Wentworth Golf Club',
+        courseLocation: 'Surrey, UK'
+      };
+      
+      const result = await adminAPI.trackPaymentWithAccounting(paymentData);
+      
+      if (result.success) {
+        console.log("✅ Payment tracked with course accounting:", result);
+      } else {
+        console.log("❌ Payment tracking failed:", result.error);
+      }
+      
+    } catch (error) {
+      console.error("🚨 Error processing payment:", error);
+    }
+
     setShowVideo(true);
   };
 
@@ -94,12 +149,12 @@ export default function Payment() {
           </h1>
           <div className="text-2xl font-bold text-white mb-2 drop-shadow-2xl">{firstName}</div>
 
-          {/* Cost Display */}
+          {/* Cost Display - Dynamic Pricing */}
           <div className="bg-white/20 border border-white/30 rounded-xl p-2 mb-2 max-w-sm mx-auto">
             <div className="text-center">
               <span className="text-white text-lg font-medium">Entry:</span>
               <div className="text-4xl font-black text-green-500 mt-1">
-                $8.00
+                {pricing.display_price}
               </div>
             </div>
           </div>
@@ -115,8 +170,26 @@ export default function Payment() {
           <span className="font-bold text-lg drop-shadow text-green-500">Shot Recording Active</span>
         </div>
 
-        {/* Use Previous Payment Option for Returning Players Only */}
-        {isReturningPlayer && lastPaymentMethod && (
+        {/* Saved Payment Method for Returning Players */}
+        {isReturningPlayer && savedMethod && (
+          <div className="mb-2">
+            <button
+              onClick={() => setPaymentMethod("saved")}
+              className={`w-full p-3 border-2 border-emerald-400 bg-emerald-50 bg-opacity-90 rounded-lg transition-all hover:bg-emerald-100 ${paymentMethod === "saved" ? "bg-emerald-200" : ""}`}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-2xl">💳</span>
+                <div className="text-emerald-800">
+                  <div className="font-bold text-lg">Use Saved Payment</div>
+                  <div className="text-sm capitalize">Saved: {savedMethod.replace('-', ' ')}</div>
+                </div>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Use Previous Payment Option for Returning Players Only (Fallback) */}
+        {isReturningPlayer && lastPaymentMethod && !savedMethod && (
           <div className="mb-2">
             <button
               onClick={() => setPaymentMethod("same")}
@@ -215,7 +288,23 @@ export default function Payment() {
         {/* Stripe Card Form for Card Payment */}
         {paymentMethod === "card" && (
           <div className="mb-2">
-            <StripeDemoForm onApproved={() => setCardApproved(true)} />
+            <StripeDemoForm onApproved={() => setCardApproved(true)} pricing={pricing} />
+          </div>
+        )}
+
+        {/* Save Payment Method Checkbox - Only show for new payment methods */}
+        {paymentMethod && paymentMethod !== "saved" && paymentMethod !== "same" && (
+          <div className="mb-3 flex items-center justify-center gap-2 bg-white bg-opacity-10 rounded-lg p-3">
+            <input
+              type="checkbox"
+              id="savePayment"
+              checked={savePaymentMethod}
+              onChange={(e) => setSavePaymentMethod(e.target.checked)}
+              className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+            />
+            <label htmlFor="savePayment" className="text-white font-medium text-sm">
+              💾 Save this payment method for faster checkout
+            </label>
           </div>
         )}
 

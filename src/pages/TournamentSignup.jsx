@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import ConfettiEffect from "../components/ConfettiEffect";
-import { notifyTournamentRegistration } from "../assets/utils/notificationService.js";
+import { adminAPI } from "../utils/adminAPI";
 
 export default function TournamentSignup() {
     const navigate = useNavigate();
@@ -37,6 +37,9 @@ export default function TournamentSignup() {
         setSubmitted(true);
         setShowConfetti(true);
         
+        // Get current player stats for qualification points
+        const playerStats = JSON.parse(localStorage.getItem("playerStats") || "{}");
+        
         // Store tournament registration data
         const tournamentData = {
             playerName: form.name,
@@ -44,13 +47,13 @@ export default function TournamentSignup() {
             playerPhone: form.phone,
             registrationDate: new Date().toISOString(),
             tournamentId: "million-dollar-tournament",
-            status: "registered"
+            status: "registered",
+            qualificationPoints: playerStats.totalPoints || 0
         };
         
         localStorage.setItem("tournamentRegistered", "true");
         localStorage.setItem("tournamentData", JSON.stringify(tournamentData));
         
-        const playerStats = JSON.parse(localStorage.getItem("playerStats") || "{}");
         playerStats.tournamentRegistered = true;
         localStorage.setItem("playerStats", JSON.stringify(playerStats));
         
@@ -59,19 +62,22 @@ export default function TournamentSignup() {
         if (form.email) localStorage.setItem("playerEmail", form.email);
         if (form.phone) localStorage.setItem("playerPhone", form.phone);
         
-        // Send registration notification using the notification service
+        // *** SEND REGISTRATION TO BACKEND ***
         try {
-            const result = await notifyTournamentRegistration(tournamentData);
-            console.log("Tournament registration notification result:", result);
+            const result = await adminAPI.registerForTournament(tournamentData);
+            console.log("Tournament registration sent to par3-admin1:", result);
+            
+            if (result && result.error) {
+                console.warn("Tournament registration warning:", result.error);
+            } else {
+                console.log("✅ Tournament registration successful!");
+            }
         } catch (error) {
-            console.error("Failed to send tournament registration notification:", error);
+            console.error("Failed to send tournament registration to backend:", error);
         }
         
-        // Send registration confirmation email to player
+        // Send registration confirmation email to player (local backup)
         sendPlayerConfirmationEmail(tournamentData);
-        
-        // Send notification to company (legacy backup)
-        sendCompanyNotificationEmail(tournamentData);
         
         setTimeout(() => navigate("/play"), 3000);
     };

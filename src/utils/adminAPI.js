@@ -1,12 +1,51 @@
 // API Configuration for connecting to admin services
 const ADMIN_API_BASE = 'https://par3-admin1.vercel.app'; // Always use the deployed backend
 
+// CORS-aware fetch wrapper
+const corsAwareFetch = async (url, options = {}) => {
+    try {
+        // Add CORS headers to the request
+        const corsOptions = {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                ...options.headers
+            },
+            mode: 'cors'
+        };
+
+        const response = await corsAwareFetch(url, corsOptions);
+        return response;
+    } catch (error) {
+        console.log('🔄 CORS Error detected, trying alternative approach:', error.message);
+        
+        // If CORS fails, try with no-cors mode for GET requests
+        if (options.method === 'GET' || !options.method) {
+            try {
+                const fallbackResponse = await corsAwareFetch(url, {
+                    ...options,
+                    mode: 'no-cors'
+                });
+                return fallbackResponse;
+            } catch (fallbackError) {
+                console.log('❌ Fallback also failed:', fallbackError.message);
+                throw error;
+            }
+        }
+        
+        throw error;
+    }
+};
+
 // API functions for admin communication
 export const adminAPI = {
     // Submit birdie claim to admin portal
     submitBirdieClaim: async (playerData, outfitDescription = '', teeTime = '') => {
         try {
-            const response = await fetch(`${ADMIN_API_BASE}/api/claims`, {
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/claims`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -34,7 +73,7 @@ export const adminAPI = {
             console.log('🚨 BIRDIE CLAIM SUBMITTED:', result);
 
             // Also send immediate email notification
-            await fetch(`${ADMIN_API_BASE}/api/send-email`, {
+            await corsAwareFetch(`${ADMIN_API_BASE}/api/send-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -73,7 +112,7 @@ Admin Portal: https://par3-admin1.vercel.app/claims
     // Submit hole-in-one claim to admin portal
     submitHoleInOneClaim: async (playerData, paymentMethod, outfitDescription = '', teeTime = '') => {
         try {
-            const response = await fetch(`${ADMIN_API_BASE}/api/claims`, {
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/claims`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -102,7 +141,7 @@ Admin Portal: https://par3-admin1.vercel.app/claims
             console.log('🚨 HOLE-IN-ONE CLAIM SUBMITTED:', result);
 
             // Also send immediate email notification
-            await fetch(`${ADMIN_API_BASE}/api/send-email`, {
+            await corsAwareFetch(`${ADMIN_API_BASE}/api/send-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -143,7 +182,7 @@ Admin Portal: https://par3-admin1.vercel.app/claims
     // Sync player stats to backend
     syncPlayerStats: async (playerData, stats) => {
         try {
-            const response = await fetch(`${ADMIN_API_BASE}/api/players`, {
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/players`, {
                 method: 'POST', // Changed from PUT to POST
                 headers: {
                     'Content-Type': 'application/json',
@@ -174,7 +213,7 @@ Admin Portal: https://par3-admin1.vercel.app/claims
     // Register player for tournament
     registerForTournament: async (tournamentData) => {
         try {
-            const response = await fetch(`${ADMIN_API_BASE}/api/tournament-registrations`, {
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/tournament-registrations`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -198,7 +237,7 @@ Admin Portal: https://par3-admin1.vercel.app/claims
             console.log('🏆 TOURNAMENT REGISTRATION SUBMITTED:', result);
 
             // Send immediate email notification to admin
-            await fetch(`${ADMIN_API_BASE}/api/send-email`, {
+            await corsAwareFetch(`${ADMIN_API_BASE}/api/send-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -230,7 +269,7 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
     // Get all tournament registrations (for batch emailing)
     getTournamentRegistrations: async () => {
         try {
-            const response = await fetch(`${ADMIN_API_BASE}/api/tournament-registrations`, {
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/tournament-registrations`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -253,7 +292,7 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
     // Send batch email to all tournament registrants
     sendTournamentBatchEmail: async (emailData) => {
         try {
-            const response = await fetch(`${ADMIN_API_BASE}/api/tournament-batch-email`, {
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/tournament-batch-email`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -285,7 +324,7 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
             const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             
             // 1. Update player record with payment history and saved payment method
-            const playerResponse = await fetch(`${ADMIN_API_BASE}/api/players`, {
+            const playerResponse = await corsAwareFetch(`${ADMIN_API_BASE}/api/players`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -307,7 +346,7 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
             });
 
             // 2. Update course accounting
-            const courseResponse = await fetch(`${ADMIN_API_BASE}/api/courses`, {
+            const courseResponse = await corsAwareFetch(`${ADMIN_API_BASE}/api/courses`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -350,7 +389,7 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
     // Get saved payment method for returning players
     getSavedPaymentMethod: async (playerEmail) => {
         try {
-            const response = await fetch(`${ADMIN_API_BASE}/api/players`);
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/players`);
             if (!response.ok) return null;
             
             const players = await response.json();
@@ -366,7 +405,7 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
     // Get course revenue summary
     getCourseRevenue: async (courseId = 'wentworth-gc') => {
         try {
-            const response = await fetch(`${ADMIN_API_BASE}/api/courses`);
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/courses`);
             if (!response.ok) return null;
             
             const courses = await response.json();
@@ -391,7 +430,7 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
     // Get dynamic pricing from backend
     getCoursePricing: async (courseId = 'wentworth-gc') => {
         try {
-            const response = await fetch(`${ADMIN_API_BASE}/api/courses`);
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/courses`);
             if (!response.ok) {
                 // Fallback to default pricing
                 return {
@@ -432,7 +471,7 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
     // Update course pricing (admin function)
     updateCoursePricing: async (courseId, newPrice) => {
         try {
-            const response = await fetch(`${ADMIN_API_BASE}/api/courses`, {
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/courses`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

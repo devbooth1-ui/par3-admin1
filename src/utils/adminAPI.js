@@ -1,10 +1,8 @@
 // API Configuration for connecting to admin services
-// Use proxy in development, direct URL in production
-const ADMIN_API_BASE = import.meta.env.DEV 
-    ? '/api' // This will be proxied by Vite to par3-admin1.vercel.app
-    : 'https://par3-admin1.vercel.app'; // Direct URL for production
+// Always use direct URL to ensure connection works
+const ADMIN_API_BASE = 'https://par3-admin1.vercel.app';
 
-console.log('🔗 Using API Base:', ADMIN_API_BASE, '(DEV mode:', import.meta.env.DEV, ')');
+console.log('🔗 Using API Base:', ADMIN_API_BASE, '(Always direct for reliability)');
 
 // CORS-aware fetch wrapper
 const corsAwareFetch = async (url, options = {}) => {

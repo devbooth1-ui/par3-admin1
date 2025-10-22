@@ -4,40 +4,17 @@ const ADMIN_API_BASE = 'https://par3-admin1.vercel.app';
 
 console.log('🔗 Using API Base:', ADMIN_API_BASE, '(Always direct for reliability)');
 
-// CORS-aware fetch wrapper
+// Simple, clean fetch wrapper - no complex CORS handling
 const corsAwareFetch = async (url, options = {}) => {
-    try {
-        // Prepare request options without client-side CORS headers
-        const corsOptions = {
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            mode: 'cors'
-        };
-
-        const response = await fetch(url, corsOptions);
-        return response;
-    } catch (error) {
-        console.log('🔄 CORS Error detected, trying alternative approach:', error.message);
-        
-        // If CORS fails, try with no-cors mode for GET requests
-        if (options.method === 'GET' || !options.method) {
-            try {
-                const fallbackResponse = await fetch(url, {
-                    ...options,
-                    mode: 'no-cors'
-                });
-                return fallbackResponse;
-            } catch (fallbackError) {
-                console.log('❌ Fallback also failed:', fallbackError.message);
-                throw error;
-            }
+    const cleanOptions = {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
         }
-        
-        throw error;
-    }
+    };
+
+    return fetch(url, cleanOptions);
 };
 
 // API functions for admin communication

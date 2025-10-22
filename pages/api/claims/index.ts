@@ -1,10 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-// CORS headers for all requests
-const setCorsHeaders = (res: NextApiResponse) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-};
 
 type Claim = {
   id: string;
@@ -26,13 +20,11 @@ const g: any = global as any;
 if (!g.__CLAIMS_DB__) g.__CLAIMS_DB__ = { claims: [] as Claim[] };
 const db = g.__CLAIMS_DB__ as { claims: Claim[] };
 
+res.setHeader("Access-Control-Allow-Origin", "*");
+res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+if (req.method === "OPTIONS") return res.status(200).end();
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  setCorsHeaders(res);
-  
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
-  }) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

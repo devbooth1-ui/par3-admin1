@@ -85,12 +85,17 @@ export default function Payment() {
         courseLocation: 'Surrey, UK'
       };
       
-      const result = await adminAPI.trackPaymentWithAccounting(paymentData);
-      
-      if (result.success) {
-        console.log("✅ Payment tracked with course accounting:", result);
-      } else {
-        console.log("❌ Payment tracking failed:", result.error);
+      try {
+        const result = await adminAPI.trackPaymentWithAccounting(paymentData);
+        
+        if (result.success) {
+          console.log("✅ Payment tracked with course accounting:", result);
+        } else {
+          console.log("❌ Payment tracking failed (non-critical):", result.error);
+        }
+      } catch (trackingError) {
+        console.log("❌ Payment tracking error (non-critical - continuing):", trackingError.message);
+        // Continue with the flow even if tracking fails
       }
       
     } catch (error) {

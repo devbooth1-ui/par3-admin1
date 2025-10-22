@@ -76,14 +76,14 @@ export const adminAPI = {
             console.log('🚨 BIRDIE CLAIM SUBMITTED:', result);
 
             // Also send immediate email notification
-            await corsAwareFetch(`${ADMIN_API_BASE}/api/send-email`, {
+            await corsAwareFetch(`${ADMIN_API_BASE}/api/email/send`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    to: 'devbooth1@yahoo.com',
-                    subject: '🚨 NEW BIRDIE CLAIM - Par3 Challenge',
-                    body: `
-NEW BIRDIE CLAIM SUBMITTED!
+                    campaign: {
+                        type: 'claim_alert',
+                        subject: '🚨 NEW BIRDIE CLAIM - Par3 Challenge',
+                        message: `NEW BIRDIE CLAIM SUBMITTED!
 
 Player: ${playerData.firstName} ${playerData.lastName}
 Email: ${playerData.email}
@@ -99,8 +99,9 @@ Submitted: ${new Date().toLocaleString()}
 
 Please verify this claim in the admin portal immediately!
 
-Admin Portal: https://par3-admin1.vercel.app/claims
-                    `
+Admin Portal: https://par3-admin1.vercel.app/claims`,
+                        targetAudience: 'admin'
+                    }
                 })
             });
 
@@ -147,14 +148,14 @@ Admin Portal: https://par3-admin1.vercel.app/claims
             console.log('🚨 HOLE-IN-ONE CLAIM SUBMITTED:', result);
 
             // Also send immediate email notification
-            await corsAwareFetch(`${ADMIN_API_BASE}/api/send-email`, {
+            await corsAwareFetch(`${ADMIN_API_BASE}/api/email/send`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    to: 'devbooth1@yahoo.com',
-                    subject: '🏆 URGENT: HOLE-IN-ONE CLAIM - Par3 Challenge',
-                    body: `
-🏆 HOLE-IN-ONE CLAIM SUBMITTED! 🏆
+                    campaign: {
+                        type: 'urgent_claim_alert',
+                        subject: '🏆 URGENT: HOLE-IN-ONE CLAIM - Par3 Challenge',
+                        message: `🏆 HOLE-IN-ONE CLAIM SUBMITTED! 🏆
 
 Player: ${playerData.firstName} ${playerData.lastName}
 Email: ${playerData.email}
@@ -172,8 +173,9 @@ Submitted: ${new Date().toLocaleString()}
 *** URGENT VERIFICATION REQUIRED ***
 Please verify this claim in the admin portal immediately!
 
-Admin Portal: https://par3-admin1.vercel.app/claims
-                    `
+Admin Portal: https://par3-admin1.vercel.app/claims`,
+                        targetAudience: 'admin'
+                    }
                 })
             });
 
@@ -243,14 +245,14 @@ Admin Portal: https://par3-admin1.vercel.app/claims
             console.log('🏆 TOURNAMENT REGISTRATION SUBMITTED:', result);
 
             // Send immediate email notification to admin
-            await corsAwareFetch(`${ADMIN_API_BASE}/api/send-email`, {
+            await corsAwareFetch(`${ADMIN_API_BASE}/api/email/send`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    to: 'devbooth1@yahoo.com',
-                    subject: '🏆 NEW TOURNAMENT REGISTRATION - Par3 Challenge',
-                    body: `
-🏆 NEW TOURNAMENT REGISTRATION! 🏆
+                    campaign: {
+                        type: 'tournament_registration',
+                        subject: '🏆 NEW TOURNAMENT REGISTRATION - Par3 Challenge',
+                        message: `🏆 NEW TOURNAMENT REGISTRATION! 🏆
 
 Player: ${tournamentData.playerName}
 Email: ${tournamentData.playerEmail}
@@ -260,8 +262,9 @@ Tournament: ${tournamentData.tournamentId}
 
 The player is now registered for the Million Dollar Shootout!
 
-Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
-                    `
+Admin Portal: https://par3-admin1.vercel.app/tournament-registrations`,
+                        targetAudience: 'admin'
+                    }
                 })
             });
 

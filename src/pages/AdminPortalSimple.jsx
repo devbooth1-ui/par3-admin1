@@ -11,6 +11,14 @@ function AdminPortal() {
         if (adminSession) {
             setIsLoggedIn(true);
             loadClaims();
+
+            // Set up auto-refresh every 30 seconds to check for new claims
+            const pollInterval = setInterval(() => {
+                console.log('🔄 Auto-refreshing claims...');
+                loadClaims();
+            }, 30000); // 30 seconds
+
+            return () => clearInterval(pollInterval);
         }
 
         // Listen for localStorage changes from other tabs/windows
@@ -26,7 +34,7 @@ function AdminPortal() {
         return () => {
             window.removeEventListener('storage', handleStorageChange);
         };
-    }, []);
+    }, [isLoggedIn]);
 
     const login = (e) => {
         e.preventDefault();

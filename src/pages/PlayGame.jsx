@@ -106,7 +106,7 @@ export default function PlayGame() {
       {/* Awards Button */}
       <div className="flex flex-col items-center gap-1 mb-2 w-full max-w-xs">
         <button
-          onClick={() => navigate("/awards")}
+          onClick={() => navigate("/Awards")}
           className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded-full shadow transition w-full"
         >
           See Awards

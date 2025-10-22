@@ -48,7 +48,7 @@ export default function App() {
       <Route path="/myscorecard" element={<MyScorecard />} />
       <Route path="/verify" element={<OutfitDescription />} />
       <Route path="/tournament" element={<Tournament />} />
-      <Route path="/awards" element={<Awards />} />
+      <Route path="/Awards" element={<Awards />} />
       <Route path="/tapin" element={<TapIn />} />
       <Route path="/leaderboard" element={<Leaderboard />} />
       <Route path="/profile" element={<Profile />} />

@@ -73,7 +73,7 @@ export default function Login() {
       } catch (error) {
         console.error("Error syncing player to admin backend:", error);
       }
-      navigate("/awards");
+      navigate("/Awards");
     } else {
       // Returning player: go to play page
       navigate("/play");

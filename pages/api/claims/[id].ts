@@ -45,7 +45,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     Object.assign(claim, rest);
-    if (status) claim.status = status as unknown any;
+    if (status) claim.status = status;
 
     return res.status(200).json({ ok: true, claim });
   }

@@ -7,14 +7,11 @@ console.log('🔗 Using API Base:', ADMIN_API_BASE, '(Always direct for reliabil
 // CORS-aware fetch wrapper
 const corsAwareFetch = async (url, options = {}) => {
     try {
-        // Add CORS headers to the request
+        // Prepare request options without client-side CORS headers
         const corsOptions = {
             ...options,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
                 ...options.headers
             },
             mode: 'cors'

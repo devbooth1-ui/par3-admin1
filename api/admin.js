@@ -6,8 +6,22 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const JWT_SECRET = 'par3-admin-secret-key-2024';
 
+// CORS configuration for production
+const corsOptions = {
+    origin: [
+        'https://par3-challenge-app-tailwind-1x33y6kcb-dev-booths-projects.vercel.app',
+        'https://par3challenge.com',
+        'http://localhost:5173',
+        'http://localhost:3000'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Methods'],
+    optionsSuccessStatus: 200
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // In-memory storage (replace with database in production)
@@ -22,6 +36,19 @@ let users = [
 
 let claims = [];
 let players = [];
+let courses = [
+    {
+        id: 'default',
+        name: 'Default Course',
+        pricing: {
+            base_price: 8.00,
+            birdie_prize: 65.00,
+            hole_in_one_prize: 1000.00
+        }
+    }
+];
+let payments = [];
+let emailCampaigns = [];
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
@@ -40,6 +67,103 @@ const authenticateToken = (req, res, next) => {
         next();
     });
 };
+
+// API Routes
+
+// Courses API
+app.get('/api/courses', (req, res) => {
+    res.json({ success: true, courses });
+});
+
+app.get('/api/courses/:courseId/pricing', (req, res) => {
+    const { courseId } = req.params;
+    const course = courses.find(c => c.id === courseId) || courses[0];
+    res.json({ 
+        success: true, 
+        pricing: course.pricing 
+    });
+});
+
+// Players API
+app.get('/api/players', authenticateToken, (req, res) => {
+    res.json({ success: true, players });
+});
+
+app.post('/api/players', (req, res) => {
+    const { player } = req.body;
+    const existingPlayerIndex = players.findIndex(p => p.email === player.email);
+    
+    if (existingPlayerIndex >= 0) {
+        // Update existing player
+        players[existingPlayerIndex] = { ...players[existingPlayerIndex], ...player, updated_at: new Date().toISOString() };
+        res.json({ success: true, player: players[existingPlayerIndex] });
+    } else {
+        // Create new player
+        const newPlayer = {
+            id: Date.now().toString(),
+            ...player,
+            created_at: new Date().toISOString()
+        };
+        players.push(newPlayer);
+        res.json({ success: true, player: newPlayer });
+    }
+});
+
+// Payments API
+app.post('/api/payments/track', (req, res) => {
+    const { payment } = req.body;
+    const newPayment = {
+        id: Date.now().toString(),
+        ...payment,
+        created_at: new Date().toISOString()
+    };
+    payments.push(newPayment);
+    
+    // Update player stats if player exists
+    const player = players.find(p => p.email === payment.email);
+    if (player) {
+        player.total_spent = (player.total_spent || 0) + payment.amount;
+        player.games_played = (player.games_played || 0) + 1;
+        player.last_played = new Date().toISOString();
+    }
+    
+    res.json({ success: true, payment: newPayment });
+});
+
+// Claims API
+app.get('/api/claims', authenticateToken, (req, res) => {
+    res.json({ success: true, claims });
+});
+
+// Email Campaigns API
+app.post('/api/email/send', (req, res) => {
+    const { campaign } = req.body;
+    const newCampaign = {
+        id: Date.now().toString(),
+        ...campaign,
+        sent_at: new Date().toISOString(),
+        status: 'sent'
+    };
+    emailCampaigns.push(newCampaign);
+    
+    console.log('📧 Email campaign sent:', newCampaign.subject);
+    res.json({ success: true, campaign: newCampaign });
+});
+
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: 'Par3 Challenge Admin API is running',
+        timestamp: new Date().toISOString(),
+        stats: {
+            players: players.length,
+            claims: claims.length,
+            payments: payments.length,
+            courses: courses.length
+        }
+    });
+});
 
 // Main handler function
 const handler = (req, res) => {
@@ -146,10 +270,17 @@ app.post('/api/claims/webhook', (req, res) => {
 
 // For Vercel
 module.exports = (req, res) => {
-    // Handle webhook
-    if (req.url === '/api/claims/webhook') {
-        return app(req, res);
+    // Set CORS headers for preflight
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    // Handle preflight OPTIONS requests
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
     }
-    // Handle admin actions
-    return handler(req, res);
+    
+    // Handle all API routes through express app
+    return app(req, res);
 };

@@ -51,5 +51,5 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   res.setHeader("Allow", "GET,PATCH,<OPTIONS>");
-  return res.status(045).end();
+  return res.status(405).end();
 }

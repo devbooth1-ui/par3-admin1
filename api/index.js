@@ -134,10 +134,34 @@ app.post('/api/payments/track', (req, res) => {
 // Claims submission
 app.post('/api/claims', (req, res) => {
     const claimData = req.body;
-    console.log('🏆 Claim submitted:', claimData.claim_type);
+    console.log('🏆 Claim submitted:', claimData);
+    
+    // Validate required fields
+    const { playerId, courseId, hole, result } = claimData;
+    
+    if (!playerId || !courseId || !hole || !result) {
+        return res.status(400).json({
+            ok: false,
+            error: `Missing required fields: playerId, courseId, hole(number), result`
+        });
+    }
+    
+    // Ensure hole is a number
+    const holeNumber = parseInt(hole);
+    if (isNaN(holeNumber) || holeNumber < 1 || holeNumber > 18) {
+        return res.status(400).json({
+            ok: false,
+            error: 'Hole must be a number between 1 and 18'
+        });
+    }
     
     const claim = {
         id: Date.now().toString(),
+        playerId,
+        courseId, 
+        hole: holeNumber,
+        result,
+        // Include all additional data
         ...claimData,
         status: 'pending',
         submitted_at: new Date().toISOString(),
@@ -147,6 +171,7 @@ app.post('/api/claims', (req, res) => {
     claims.push(claim);
     
     res.json({
+        ok: true,
         success: true,
         claim_id: claim.id,
         message: 'Claim submitted successfully'

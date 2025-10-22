@@ -135,6 +135,54 @@ app.get('/api/claims', authenticateToken, (req, res) => {
     res.json({ success: true, claims });
 });
 
+app.post('/api/claims', (req, res) => {
+    const claimData = req.body;
+    console.log('🏆 Admin API Claim submitted:', claimData);
+    
+    // Validate required fields
+    const { playerId, courseId, hole, result } = claimData;
+    
+    if (!playerId || !courseId || !hole || !result) {
+        return res.status(400).json({
+            ok: false,
+            error: `Missing required fields: playerId, courseId, hole(number), result`
+        });
+    }
+    
+    // Ensure hole is a number
+    const holeNumber = parseInt(hole);
+    if (isNaN(holeNumber) || holeNumber < 1 || holeNumber > 18) {
+        return res.status(400).json({
+            ok: false,
+            error: 'Hole must be a number between 1 and 18'
+        });
+    }
+    
+    const claim = {
+        id: Date.now().toString(),
+        playerId,
+        courseId, 
+        hole: holeNumber,
+        result,
+        // Include all additional data
+        ...claimData,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        wallet_address: null
+    };
+    
+    claims.push(claim);
+    console.log('New claim added:', claim);
+    console.log('Total claims:', claims.length);
+    
+    res.json({
+        ok: true,
+        success: true,
+        claim_id: claim.id,
+        message: 'Claim submitted successfully'
+    });
+});
+
 // Email Campaigns API
 app.post('/api/email/send', (req, res) => {
     const { campaign } = req.body;

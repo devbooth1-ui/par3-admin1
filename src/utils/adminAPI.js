@@ -51,15 +51,18 @@ export const adminAPI = {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    player_email: playerData.email || '',
-                    course_id: 'wentworth-gc',
+                    playerId: playerData.email || `player_${Date.now()}`,
+                    courseId: 'wentworth-gc',
                     hole: 1,
-                    yards: 130,
-                    claim_type: 'birdie',
+                    result: 'birdie',
+                    // Additional data
+                    player_email: playerData.email || '',
                     player_name: `${playerData.firstName} ${playerData.lastName}`,
                     player_phone: playerData.phone || '',
                     outfit_description: outfitDescription,
-                    tee_time: teeTime
+                    tee_time: teeTime,
+                    yards: 130,
+                    claim_type: 'birdie'
                 })
             });
 
@@ -118,15 +121,18 @@ Admin Portal: https://par3-admin1.vercel.app/claims
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    player_email: playerData.email || '',
-                    course_id: 'wentworth-gc',
+                    playerId: playerData.email || `player_${Date.now()}`,
+                    courseId: 'wentworth-gc',
                     hole: 1,
-                    yards: 130,
-                    claim_type: 'hole_in_one',
+                    result: 'hole_in_one',
+                    // Additional data
+                    player_email: playerData.email || '',
                     player_name: `${playerData.firstName} ${playerData.lastName}`,
                     player_phone: playerData.phone || '',
                     outfit_description: outfitDescription,
                     tee_time: teeTime,
+                    yards: 130,
+                    claim_type: 'hole_in_one',
                     payment_method: paymentMethod || 'card'
                 })
             });

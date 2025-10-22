@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { adminAPI } from '../utils/adminAPI';
 
 function AdminPortal() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -38,28 +39,40 @@ function AdminPortal() {
         }
     };
 
-    const loadClaims = () => {
+    const loadClaims = async () => {
         console.log('🔄 Loading claims...');
 
-        // Check global claims first
-        const globalClaims = window.globalClaims || [];
-        console.log('🌐 Global claims found:', globalClaims.length);
+        // First try to fetch from backend
+        try {
+            const result = await adminAPI.getClaims();
+            if (result.success && result.claims) {
+                console.log('✅ Claims loaded from backend:', result.claims.length);
+                setClaims(result.claims);
+                // Save to localStorage for offline access
+                localStorage.setItem('adminClaims', JSON.stringify(result.claims));
+                return;
+            }
+        } catch (error) {
+            console.log('❌ Backend fetch failed, trying local storage...');
+        }
 
-        // Check localStorage
+        // Fallback to localStorage and global claims
         const storedClaims = localStorage.getItem('adminClaims');
+        const globalClaims = window.globalClaims || [];
+
         console.log('💾 localStorage adminClaims:', storedClaims);
+        console.log('🌐 Global claims found:', globalClaims.length);
 
         if (storedClaims) {
             const parsedClaims = JSON.parse(storedClaims);
-            console.log('📋 Parsed claims from storage:', parsedClaims.length);
+            console.log('📋 Using stored claims:', parsedClaims.length);
             setClaims(parsedClaims);
         } else if (globalClaims.length > 0) {
             console.log('📋 Using global claims:', globalClaims.length);
             setClaims(globalClaims);
-            // Save to localStorage for persistence
             localStorage.setItem('adminClaims', JSON.stringify(globalClaims));
         } else {
-            console.log('📋 No claims found, setting empty array');
+            console.log('📋 No claims found anywhere, setting empty array');
             setClaims([]);
         }
     };

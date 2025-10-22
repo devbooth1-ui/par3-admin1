@@ -509,6 +509,34 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations
             console.error('Failed to update pricing:', error);
             return { error: error.message, offline: true };
         }
+    },
+
+    // Fetch all claims from admin portal
+    getClaims: async () => {
+        try {
+            console.log('🔄 Fetching claims from backend...');
+            
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/claims`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log('❌ Get Claims API Error:', errorText);
+                throw new Error(`Failed to fetch claims: ${response.status} - ${errorText}`);
+            }
+
+            const claims = await response.json();
+            console.log('📋 Claims fetched from backend:', claims.length);
+            return { success: true, claims };
+
+        } catch (error) {
+            console.error('Failed to fetch claims:', error);
+            return { error: error.message, offline: true, claims: [] };
+        }
     }
 };
 

@@ -15,7 +15,7 @@ export default function Home() {
       </div>
 
       <p className="text-gray-600">
-        Backend: {process.env.NEXT_PUBLIC_API_URL || "not set"}
+        Backend: Same-origin (par3-admin1.vercel.app/api)
       </p>
     </main>
   );

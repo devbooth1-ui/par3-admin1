@@ -90,6 +90,25 @@ export default function Payment() {
         
         if (result.success) {
           console.log("✅ Payment tracked with course accounting:", result);
+          
+          // Also record the course play for analytics
+          try {
+            await fetch('https://par3-admin1.vercel.app/api/course-plays', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                playerName: paymentData.playerName,
+                playerEmail: paymentData.playerEmail,
+                courseId: paymentData.courseId,
+                courseName: paymentData.courseName,
+                amount: paymentData.amount,
+                paymentMethod: paymentData.paymentMethod
+              })
+            });
+            console.log("✅ Course play recorded in backend");
+          } catch (courseError) {
+            console.log("❌ Course play recording failed (non-critical):", courseError.message);
+          }
         } else {
           console.log("❌ Payment tracking failed (non-critical):", result.error);
         }

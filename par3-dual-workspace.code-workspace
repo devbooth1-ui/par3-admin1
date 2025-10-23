@@ -1,0 +1,48 @@
+{
+    "folders": [
+        {
+            "name": "Par3 Player Frontend",
+            "path": "."
+        },
+        {
+            "name": "Par3 Admin Backend",
+            "path": "./par3-admin1"
+        }
+    ],
+    "settings": {
+        "terminal.integrated.defaultProfile.osx": "bash"
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "Start Player Frontend",
+                "type": "shell",
+                "command": "npm run dev",
+                "group": "build",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}"
+                }
+            },
+            {
+                "label": "Start Admin Backend",
+                "type": "shell",
+                "command": "npm run dev",
+                "group": "build",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}/par3-admin1"
+                }
+            },
+            {
+                "label": "Start Both (Player + Admin)",
+                "dependsOrder": "parallel",
+                "dependsOn": [
+                    "Start Player Frontend",
+                    "Start Admin Backend"
+                ]
+            }
+        ]
+    }
+}

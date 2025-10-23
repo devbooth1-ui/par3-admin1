@@ -21,7 +21,6 @@ import OrderForm from "./pages/OrderForm.jsx";
 import ThanksForPlaying from "./pages/ThanksForPlaying.jsx";
 import TournamentSignup from "./pages/TournamentSignup.jsx";
 import TermsAndConditions from "./pages/TermsAndConditions.jsx";
-import AdminPortal from "./pages/AdminPortalSimple.jsx";
 import TestClaims from "./pages/TestClaims.jsx";
 
 
@@ -57,7 +56,6 @@ export default function App() {
       <Route path="/thanks-for-playing" element={<ThanksForPlaying />} />
       <Route path="/tournament-signup" element={<TournamentSignup />} />
       <Route path="/terms" element={<TermsAndConditions />} />
-      <Route path="/admin" element={<AdminPortal />} />
       <Route path="/test-claims" element={<TestClaims />} />
     </Routes>
   );

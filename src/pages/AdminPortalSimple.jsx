@@ -39,6 +39,8 @@ function AdminPortal() {
         customer_type: 'corporate',
         notes: '' 
     });
+    const [editingCourse, setEditingCourse] = useState(null);
+    const [editingCustomer, setEditingCustomer] = useState(null);
 
     useEffect(() => {
         const adminSession = localStorage.getItem('adminSession');
@@ -90,63 +92,25 @@ function AdminPortal() {
     const loadCourses = async () => {
         console.log('🏌️ Loading golf courses...');
         
-        // Load sample data for now (you can connect to backend later)
-        const sampleCourses = [
-            {
-                id: '1',
-                name: 'Wentworth Golf Club',
-                location: 'Surrey, UK',
-                contact_name: 'John Smith',
-                contact_email: 'manager@wentworth.com',
-                contact_phone: '+44 1234 567890',
-                pricing_model: 'premium',
-                status: 'active',
-                notes: 'Long-term partner, premium pricing tier'
-            },
-            {
-                id: '2', 
-                name: 'Cypress Creek Golf Course',
-                location: 'Houston, TX',
-                contact_name: 'Sarah Johnson',
-                contact_email: 'manager@cypresscreekgolf.com',
-                contact_phone: '+1 713-555-0123',
-                pricing_model: 'standard',
-                status: 'active',
-                notes: 'Standard partnership, weekly tournaments'
-            }
-        ];
-        
-        setCourses(sampleCourses);
+        // Load from localStorage (no sample data - pure CRM)
+        const storedCourses = localStorage.getItem('adminCourses');
+        if (storedCourses) {
+            setCourses(JSON.parse(storedCourses));
+        } else {
+            setCourses([]); // Start with empty CRM
+        }
     };
 
     const loadCustomers = async () => {
         console.log('🏢 Loading other customers...');
         
-        // Load sample data for now
-        const sampleCustomers = [
-            {
-                id: '1',
-                company_name: 'Corporate Golf Events Inc.',
-                contact_name: 'Michael Davis',
-                contact_email: 'mike@corporategolf.com',
-                contact_phone: '+1 555-123-4567',
-                customer_type: 'corporate',
-                status: 'active',
-                notes: 'Organizes corporate tournaments, bulk pricing'
-            },
-            {
-                id: '2',
-                company_name: 'Pro Shop Equipment Ltd.',
-                contact_name: 'Lisa Wilson',
-                contact_email: 'lisa@proshop.com', 
-                contact_phone: '+1 555-987-6543',
-                customer_type: 'vendor',
-                status: 'active',
-                notes: 'Equipment supplier, trade discounts'
-            }
-        ];
-        
-        setCustomers(sampleCustomers);
+        // Load from localStorage (no sample data - pure CRM)
+        const storedCustomers = localStorage.getItem('adminCustomers');
+        if (storedCustomers) {
+            setCustomers(JSON.parse(storedCustomers));
+        } else {
+            setCustomers([]); // Start with empty CRM
+        }
     };
 
     const loadClaims = async () => {
@@ -256,6 +220,108 @@ function AdminPortal() {
         });
         
         alert('Customer added successfully!');
+    };
+
+    // Edit Course Functions
+    const startEditingCourse = (course) => {
+        setEditingCourse(course.id);
+        setNewCourse(course);
+    };
+
+    const saveEditCourse = (e) => {
+        e.preventDefault();
+        const updatedCourses = courses.map(course => 
+            course.id === editingCourse 
+                ? { ...newCourse, id: editingCourse, updated_at: new Date().toISOString() }
+                : course
+        );
+        setCourses(updatedCourses);
+        localStorage.setItem('adminCourses', JSON.stringify(updatedCourses));
+        
+        // Reset form and editing state
+        setEditingCourse(null);
+        setNewCourse({ 
+            name: '', 
+            location: '', 
+            contact_name: '', 
+            contact_email: '', 
+            contact_phone: '', 
+            pricing_model: 'standard',
+            notes: '' 
+        });
+        alert('Golf course updated successfully!');
+    };
+
+    const cancelEditCourse = () => {
+        setEditingCourse(null);
+        setNewCourse({ 
+            name: '', 
+            location: '', 
+            contact_name: '', 
+            contact_email: '', 
+            contact_phone: '', 
+            pricing_model: 'standard',
+            notes: '' 
+        });
+    };
+
+    const deleteCourse = (courseId) => {
+        if (confirm('Are you sure you want to delete this golf course? This action cannot be undone.')) {
+            const updatedCourses = courses.filter(course => course.id !== courseId);
+            setCourses(updatedCourses);
+            localStorage.setItem('adminCourses', JSON.stringify(updatedCourses));
+            alert('Golf course deleted successfully!');
+        }
+    };
+
+    // Edit Customer Functions
+    const startEditingCustomer = (customer) => {
+        setEditingCustomer(customer.id);
+        setNewCustomer(customer);
+    };
+
+    const saveEditCustomer = (e) => {
+        e.preventDefault();
+        const updatedCustomers = customers.map(customer => 
+            customer.id === editingCustomer 
+                ? { ...newCustomer, id: editingCustomer, updated_at: new Date().toISOString() }
+                : customer
+        );
+        setCustomers(updatedCustomers);
+        localStorage.setItem('adminCustomers', JSON.stringify(updatedCustomers));
+        
+        // Reset form and editing state
+        setEditingCustomer(null);
+        setNewCustomer({ 
+            company_name: '', 
+            contact_name: '', 
+            contact_email: '', 
+            contact_phone: '', 
+            customer_type: 'corporate',
+            notes: '' 
+        });
+        alert('Customer updated successfully!');
+    };
+
+    const cancelEditCustomer = () => {
+        setEditingCustomer(null);
+        setNewCustomer({ 
+            company_name: '', 
+            contact_name: '', 
+            contact_email: '', 
+            contact_phone: '', 
+            customer_type: 'corporate',
+            notes: '' 
+        });
+    };
+
+    const deleteCustomer = (customerId) => {
+        if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+            const updatedCustomers = customers.filter(customer => customer.id !== customerId);
+            setCustomers(updatedCustomers);
+            localStorage.setItem('adminCustomers', JSON.stringify(updatedCustomers));
+            alert('Customer deleted successfully!');
+        }
     };
 
     if (!isLoggedIn) {
@@ -545,8 +611,24 @@ function AdminPortal() {
                 {activeTab === 'courses' && (
                     <>
                         <div className="bg-white p-6 rounded-lg shadow mb-6">
-                            <h3 className="text-lg font-bold mb-4">🏌️ Add New Golf Course Partner</h3>
-                            <form onSubmit={addCourse} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold">
+                                    🏌️ {editingCourse ? 'Edit Golf Course Partner' : 'Add New Golf Course Partner'}
+                                </h3>
+                                <button
+                                    onClick={() => {
+                                        if (confirm('Clear all golf course data? This cannot be undone!')) {
+                                            setCourses([]);
+                                            localStorage.removeItem('adminCourses');
+                                            alert('All golf course data cleared!');
+                                        }
+                                    }}
+                                    className="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600"
+                                >
+                                    🗑️ Clear All Courses
+                                </button>
+                            </div>
+                            <form onSubmit={editingCourse ? saveEditCourse : addCourse} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Course Name</label>
                                     <input
@@ -623,13 +705,22 @@ function AdminPortal() {
                                         placeholder="Partnership details, special arrangements..."
                                     />
                                 </div>
-                                <div className="md:col-span-2">
+                                <div className="md:col-span-2 flex gap-4">
                                     <button
                                         type="submit"
                                         className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold"
                                     >
-                                        Add Golf Course
+                                        {editingCourse ? 'Update Golf Course' : 'Add Golf Course'}
                                     </button>
+                                    {editingCourse && (
+                                        <button
+                                            type="button"
+                                            onClick={cancelEditCourse}
+                                            className="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold"
+                                        >
+                                            Cancel
+                                        </button>
+                                    )}
                                 </div>
                             </form>
                         </div>
@@ -653,6 +744,7 @@ function AdminPortal() {
                                                 <th className="p-3 text-left">Contact</th>
                                                 <th className="p-3 text-left">Pricing</th>
                                                 <th className="p-3 text-left">Status</th>
+                                                <th className="p-3 text-left">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -679,6 +771,22 @@ function AdminPortal() {
                                                             {course.status}
                                                         </span>
                                                     </td>
+                                                    <td className="p-3">
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => startEditingCourse(course)}
+                                                                className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                                                            >
+                                                                ✏️ Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => deleteCourse(course.id)}
+                                                                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                                                            >
+                                                                🗑️ Delete
+                                                            </button>
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -693,8 +801,24 @@ function AdminPortal() {
                 {activeTab === 'customers' && (
                     <>
                         <div className="bg-white p-6 rounded-lg shadow mb-6">
-                            <h3 className="text-lg font-bold mb-4">🏢 Add New Business Customer</h3>
-                            <form onSubmit={addCustomer} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold">
+                                    🏢 {editingCustomer ? 'Edit Business Customer' : 'Add New Business Customer'}
+                                </h3>
+                                <button
+                                    onClick={() => {
+                                        if (confirm('Clear all customer data? This cannot be undone!')) {
+                                            setCustomers([]);
+                                            localStorage.removeItem('adminCustomers');
+                                            alert('All customer data cleared!');
+                                        }
+                                    }}
+                                    className="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600"
+                                >
+                                    🗑️ Clear All Customers
+                                </button>
+                            </div>
+                            <form onSubmit={editingCustomer ? saveEditCustomer : addCustomer} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Company Name</label>
                                     <input
@@ -762,13 +886,22 @@ function AdminPortal() {
                                         placeholder="Relationship details, special requirements..."
                                     />
                                 </div>
-                                <div className="md:col-span-2">
+                                <div className="md:col-span-2 flex gap-4">
                                     <button
                                         type="submit"
                                         className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold"
                                     >
-                                        Add Customer
+                                        {editingCustomer ? 'Update Customer' : 'Add Customer'}
                                     </button>
+                                    {editingCustomer && (
+                                        <button
+                                            type="button"
+                                            onClick={cancelEditCustomer}
+                                            className="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold"
+                                        >
+                                            Cancel
+                                        </button>
+                                    )}
                                 </div>
                             </form>
                         </div>
@@ -792,6 +925,7 @@ function AdminPortal() {
                                                 <th className="p-3 text-left">Contact</th>
                                                 <th className="p-3 text-left">Phone</th>
                                                 <th className="p-3 text-left">Status</th>
+                                                <th className="p-3 text-left">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -818,6 +952,22 @@ function AdminPortal() {
                                                         <span className="px-2 py-1 rounded text-sm bg-green-100 text-green-800">
                                                             {customer.status}
                                                         </span>
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => startEditingCustomer(customer)}
+                                                                className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                                                            >
+                                                                ✏️ Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => deleteCustomer(customer.id)}
+                                                                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                                                            >
+                                                                🗑️ Delete
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}

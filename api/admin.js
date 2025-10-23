@@ -316,6 +316,94 @@ app.post('/api/claims/webhook', (req, res) => {
     });
 });
 
+// Course Play Tracking API
+app.post('/api/course-plays', (req, res) => {
+    const { playerName, playerEmail, courseId, courseName, amount, paymentMethod } = req.body;
+    
+    console.log(`🏌️ Recording play: ${playerName} at ${courseName} for $${amount}`);
+    
+    // Record the play in course analytics
+    let coursePlay = {
+        id: Date.now().toString(),
+        playerName,
+        playerEmail,
+        courseId: courseId || 'wentworth-gc',
+        courseName: courseName || 'Wentworth Golf Club',
+        amount: parseFloat(amount) || 8.00,
+        paymentMethod: paymentMethod || 'card',
+        playDate: new Date().toISOString()
+    };
+    
+    // Add to course plays tracking (you can expand this to track per course)
+    if (!global.coursePlays) global.coursePlays = [];
+    global.coursePlays.push(coursePlay);
+    
+    // Also update player record
+    let existingPlayerIndex = players.findIndex(p => p.email === playerEmail);
+    if (existingPlayerIndex >= 0) {
+        // Add play to existing player
+        if (!players[existingPlayerIndex].plays) players[existingPlayerIndex].plays = [];
+        players[existingPlayerIndex].plays.push(coursePlay);
+        players[existingPlayerIndex].totalSpent = (players[existingPlayerIndex].totalSpent || 0) + coursePlay.amount;
+        players[existingPlayerIndex].lastPlayDate = coursePlay.playDate;
+    } else {
+        // Create new player record
+        const newPlayer = {
+            id: Date.now().toString(),
+            name: playerName,
+            email: playerEmail,
+            plays: [coursePlay],
+            totalSpent: coursePlay.amount,
+            lastPlayDate: coursePlay.playDate,
+            created_at: new Date().toISOString()
+        };
+        players.push(newPlayer);
+    }
+    
+    res.json({
+        success: true,
+        message: 'Play recorded successfully',
+        playId: coursePlay.id,
+        playerTotal: players.find(p => p.email === playerEmail)?.totalSpent || coursePlay.amount
+    });
+});
+
+// Course Analytics API
+app.get('/api/course-analytics', authenticateToken, (req, res) => {
+    const coursePlays = global.coursePlays || [];
+    
+    // Group plays by course
+    const courseStats = {};
+    coursePlays.forEach(play => {
+        if (!courseStats[play.courseId]) {
+            courseStats[play.courseId] = {
+                courseId: play.courseId,
+                courseName: play.courseName,
+                totalPlays: 0,
+                totalRevenue: 0,
+                uniquePlayers: new Set()
+            };
+        }
+        courseStats[play.courseId].totalPlays++;
+        courseStats[play.courseId].totalRevenue += play.amount;
+        courseStats[play.courseId].uniquePlayers.add(play.playerEmail);
+    });
+    
+    // Convert Set to count for JSON response
+    Object.keys(courseStats).forEach(courseId => {
+        courseStats[courseId].uniquePlayerCount = courseStats[courseId].uniquePlayers.size;
+        delete courseStats[courseId].uniquePlayers; // Remove Set for JSON
+    });
+    
+    res.json({
+        success: true,
+        totalPlays: coursePlays.length,
+        totalRevenue: coursePlays.reduce((sum, play) => sum + play.amount, 0),
+        courseBreakdown: Object.values(courseStats),
+        recentPlays: coursePlays.slice(-10).reverse() // Last 10 plays
+    });
+});
+
 // For Vercel
 module.exports = (req, res) => {
     // Set CORS headers for preflight

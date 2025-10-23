@@ -6,7 +6,9 @@ function AdminPortal() {
     const [claims, setClaims] = useState([]);
     const [courses, setCourses] = useState([]);
     const [customers, setCustomers] = useState([]);
-    const [activeTab, setActiveTab] = useState('courses'); // courses, customers, claims, emails
+    const [players, setPlayers] = useState([]);
+    const [courseAnalytics, setCourseAnalytics] = useState({});
+    const [activeTab, setActiveTab] = useState('players'); // players, courses, customers, claims, emails
     const [loginForm, setLoginForm] = useState({ email: '', password: '' });
     const [emailCampaign, setEmailCampaign] = useState({
         type: 'tournament',
@@ -87,6 +89,8 @@ function AdminPortal() {
         loadClaims();
         loadCourses();
         loadCustomers();
+        loadPlayers();
+        loadCourseAnalytics();
     };
 
     const loadCourses = async () => {
@@ -110,6 +114,42 @@ function AdminPortal() {
             setCustomers(JSON.parse(storedCustomers));
         } else {
             setCustomers([]); // Start with empty CRM
+        }
+    };
+
+    const loadPlayers = async () => {
+        console.log('👥 Loading players from backend...');
+        
+        try {
+            const result = await adminAPI.getPlayers();
+            if (result.success && result.players) {
+                console.log('✅ Players loaded from backend:', result.players.length);
+                setPlayers(result.players);
+            } else {
+                console.log('❌ Failed to load players:', result.error);
+                setPlayers([]);
+            }
+        } catch (error) {
+            console.log('❌ Players fetch failed:', error.message);
+            setPlayers([]);
+        }
+    };
+
+    const loadCourseAnalytics = async () => {
+        console.log('📊 Loading course analytics from backend...');
+        
+        try {
+            const result = await adminAPI.getCourseAnalytics();
+            if (result.success) {
+                console.log('✅ Course analytics loaded:', result);
+                setCourseAnalytics(result);
+            } else {
+                console.log('❌ Failed to load course analytics:', result.error);
+                setCourseAnalytics({});
+            }
+        } catch (error) {
+            console.log('❌ Course analytics fetch failed:', error.message);
+            setCourseAnalytics({});
         }
     };
 
@@ -395,6 +435,16 @@ function AdminPortal() {
                 <div className="border-b border-gray-200 mb-6">
                     <nav className="flex space-x-8">
                         <button
+                            onClick={() => setActiveTab('players')}
+                            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                activeTab === 'players' 
+                                    ? 'border-blue-500 text-blue-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            👥 Players
+                        </button>
+                        <button
                             onClick={() => setActiveTab('courses')}
                             className={`py-2 px-1 border-b-2 font-medium text-sm ${
                                 activeTab === 'courses' 
@@ -508,6 +558,152 @@ function AdminPortal() {
                             <p className="text-2xl">{customers.length}</p>
                         </div>
                     </div>
+                )}
+
+                {activeTab === 'players' && (
+                    <div className="grid grid-cols-4 gap-4 mb-6">
+                        <div className="bg-blue-100 p-4 rounded-lg">
+                            <h3 className="font-bold">Total Players</h3>
+                            <p className="text-2xl">{players.length}</p>
+                        </div>
+                        <div className="bg-green-100 p-4 rounded-lg">
+                            <h3 className="font-bold">Active Players</h3>
+                            <p className="text-2xl">{players.filter(p => p.status === 'active').length}</p>
+                        </div>
+                        <div className="bg-purple-100 p-4 rounded-lg">
+                            <h3 className="font-bold">Tournament Qualified</h3>
+                            <p className="text-2xl">{players.filter(p => p.tournament_points >= 10).length}</p>
+                        </div>
+                        <div className="bg-yellow-100 p-4 rounded-lg">
+                            <h3 className="font-bold">Total Claims</h3>
+                            <p className="text-2xl">{players.reduce((sum, p) => sum + (p.total_claims || 0), 0)}</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* PLAYERS TAB CONTENT - Backend Data Display */}
+                {activeTab === 'players' && (
+                    <>
+                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6">
+                            <p className="text-blue-800 text-sm">
+                                <strong>Player Management:</strong> View and manage players from the Par3 Challenge backend system.
+                            </p>
+                        </div>
+
+                        <div className="bg-white p-6 rounded-lg shadow mb-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold">👥 Player Management</h3>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={loadPlayers}
+                                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    >
+                                        🔄 Refresh Players
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                console.log('🔧 Testing backend connection...');
+                                                const response = await fetch('https://par3-admin1.vercel.app/api/health');
+                                                const result = await response.json();
+                                                alert(`✅ Backend Status: ${result.message}\nPlayers: ${result.stats?.players || 0}\nClaims: ${result.stats?.claims || 0}`);
+                                            } catch (error) {
+                                                alert(`❌ Backend Error: ${error.message}`);
+                                            }
+                                        }}
+                                        className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+                                    >
+                                        🔧 Test Backend
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow">
+                            <div className="p-4 border-b bg-blue-50">
+                                <h3 className="font-bold text-blue-800">👥 Players from Par3 Backend</h3>
+                            </div>
+
+                            {players.length === 0 ? (
+                                <div className="p-8 text-center text-gray-500">
+                                    <p className="text-lg mb-2">👥 No players found</p>
+                                    <p>Players will appear here when they register and play the game.</p>
+                                    <button
+                                        onClick={loadPlayers}
+                                        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    >
+                                        🔄 Refresh from Backend
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="p-3 text-left">Player Name</th>
+                                                <th className="p-3 text-left">Email</th>
+                                                <th className="p-3 text-left">Status</th>
+                                                <th className="p-3 text-left">Tournament Points</th>
+                                                <th className="p-3 text-left">Total Claims</th>
+                                                <th className="p-3 text-left">Last Active</th>
+                                                <th className="p-3 text-left">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {players.map((player) => (
+                                                <tr key={player.id} className="border-t">
+                                                    <td className="p-3">
+                                                        <div className="font-semibold">
+                                                            {player.first_name} {player.last_name}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500">
+                                                            ID: {player.id}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3">{player.email}</td>
+                                                    <td className="p-3">
+                                                        <span className={`px-2 py-1 rounded text-sm ${
+                                                            player.status === 'active' 
+                                                                ? 'bg-green-100 text-green-800' 
+                                                                : 'bg-gray-100 text-gray-800'
+                                                        }`}>
+                                                            {player.status || 'active'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <span className="font-semibold">
+                                                            {player.tournament_points || 0}
+                                                        </span>
+                                                        {(player.tournament_points || 0) >= 10 && (
+                                                            <span className="ml-2 text-xs bg-gold-100 text-gold-800 px-2 py-1 rounded">
+                                                                🏆 Qualified
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-3">{player.total_claims || 0}</td>
+                                                    <td className="p-3">
+                                                        {player.last_active ? new Date(player.last_active).toLocaleDateString() : 'N/A'}
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    alert(`Player Details:\n\nName: ${player.first_name} ${player.last_name}\nEmail: ${player.email}\nTournament Points: ${player.tournament_points || 0}\nTotal Claims: ${player.total_claims || 0}\nRegistered: ${player.created_at ? new Date(player.created_at).toLocaleDateString() : 'N/A'}`);
+                                                                }}
+                                                                className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                                                            >
+                                                                👁️ View
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
 
                 {/* GOLF COURSES TAB CONTENT - CRM */}

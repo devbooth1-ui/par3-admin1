@@ -513,6 +513,131 @@ Admin Portal: https://par3-admin1.vercel.app/tournament-registrations`,
             console.error('Failed to fetch claims:', error);
             return { error: error.message, offline: true, claims: [] };
         }
+    },
+
+    // Get players from backend (for admin Players tab)
+    getPlayers: async () => {
+        try {
+            console.log('👥 Fetching players from backend...');
+            
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/players`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log('❌ Get Players API Error:', errorText);
+                throw new Error(`Failed to fetch players: ${response.status} - ${errorText}`);
+            }
+
+            const players = await response.json();
+            console.log('👥 Players fetched from backend:', players.length);
+            return { success: true, players };
+
+        } catch (error) {
+            console.error('Failed to fetch players:', error);
+            return { error: error.message, offline: true, players: [] };
+        }
+    },
+
+    // Get course analytics from backend (for admin Players tab)
+    getCourseAnalytics: async () => {
+        try {
+            console.log('📊 Fetching course analytics from backend...');
+            
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/course-analytics`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log('❌ Get Course Analytics API Error:', errorText);
+                throw new Error(`Failed to fetch course analytics: ${response.status} - ${errorText}`);
+            }
+
+            const analytics = await response.json();
+            console.log('📊 Course analytics fetched from backend:', analytics);
+            return { success: true, ...analytics };
+
+        } catch (error) {
+            console.error('Failed to fetch course analytics:', error);
+            return { error: error.message, offline: true };
+        }
+    },
+
+    // Record course play (called from Payment.jsx)
+    recordCoursePlay: async (playData) => {
+        try {
+            console.log('🏌️ Recording course play to backend...', playData);
+            
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/course-plays`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(playData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log('❌ Record Course Play API Error:', errorText);
+                throw new Error(`Failed to record course play: ${response.status} - ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('✅ Course play recorded successfully:', result);
+            return { success: true, ...result };
+
+        } catch (error) {
+            console.error('Failed to record course play:', error);
+            return { error: error.message, offline: true };
+        }
+    },
+
+    // Get players from backend
+    getPlayers: async () => {
+        try {
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/players`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to get players: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return { success: true, players: result.players || [] };
+        } catch (error) {
+            console.error('Failed to get players:', error);
+            return { error: error.message, players: [] };
+        }
+    },
+
+    // Get course analytics from backend
+    getCourseAnalytics: async () => {
+        try {
+            const response = await corsAwareFetch(`${ADMIN_API_BASE}/api/course-analytics`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to get course analytics: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return { success: true, ...result };
+        } catch (error) {
+            console.error('Failed to get course analytics:', error);
+            return { error: error.message, success: false };
+        }
     }
 };
 

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAR3 Challenge - Admin Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+            <div class="text-center mb-8">
+                <img src="/par3logo.png" alt="Par 3 Challenge Logo" class="w-48 h-auto mx-auto mb-4 drop-shadow-lg">
+                <p class="text-gray-600">Admin Portal</p>
+            </div>
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="email"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-green-500"
+                        required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                    <input type="password" id="password"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-green-500"
+                        required>
+                </div>
+                <button type="submit"
+                    class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                    Login
+                </button>
+            </form>
+            <div id="loginError" class="mt-4 text-red-600 text-sm hidden"></div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hidden">
+        <nav class="bg-green-600 text-white p-4">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">PAR3 Admin Portal</h1>
+                <button id="logoutBtn" class="bg-green-700 px-4 py-2 rounded hover:bg-green-800">
+                    Logout
+                </button>
+            </div>
+        </nav>
+
+        <div class="container mx-auto p-6">
+            <!-- Navigation Tabs -->
+            <div class="mb-6">
+                <nav class="flex space-x-8">
+                    <button id="claimsTab"
+                        class="tab-button active border-b-2 border-green-500 text-green-600 font-semibold py-2">
+                        Claims
+                    </button>
+                    <button id="specialsTab" class="tab-button text-gray-500 hover:text-gray-700 py-2">
+                        Specials & Promotions
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Claims Section -->
+            <div id="claimsSection">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Stats Cards -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Claims</h3>
+                        <p id="totalClaims" class="text-3xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Pending Claims</h3>
+                        <p id="pendingClaims" class="text-3xl font-bold text-yellow-600">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Approved Claims</h3>
+                        <p id="approvedClaims" class="text-3xl font-bold text-blue-600">0</p>
+                    </div>
+                </div>
+
+                <!-- Claims Table -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Recent Claims</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Player</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Type</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Course</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Date</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="claimsTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Claims will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specials Section -->
+            <div id="specialsSection" class="hidden">
+                <!-- Create Special Form -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Create New Special/Promotion</h2>
+                    <form id="createSpecialForm" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                                <input type="text" name="title"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-green-500"
+                                    placeholder="Weekend Special - 25% Off!" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                                <select name="type"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-green-500"
+                                    required>
+                                    <option value="discount">Discount</option>
+                                    <option value="freebie">Freebie</option>
+                                    <option value="bonus_points">Bonus Points</option>
+                                    <option value="announcement">Announcement</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            <textarea name="description" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-green-500"
+                                placeholder="Get 25% off your next Par3 Challenge round this weekend!"
+                                required></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Discount Amount</label>
+                                <input type="number" name="discount_amount" min="0"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-green-500"
+                                    placeholder="25">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Valid From</label>
+                                <input type="datetime-local" name="valid_from"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-green-500"
+                                    required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Valid Until</label>
+                                <input type="datetime-local" name="valid_until"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-green-500"
+                                    required>
+                            </div>
+                        </div>
+                        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">
+                            Create Special
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Active Specials List -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Active Specials</h2>
+                    </div>
+                    <div id="specialsList" class="p-6">
+                        <!-- Specials will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Claim Details Modal -->
+    <div id="claimModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Claim Details</h3>
+                    <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="claimDetails">
+                    <!-- Claim details will be populated here -->
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button id="approveClaim" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        Approve
+                    </button>
+                    <button id="rejectClaim" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                        Reject
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('adminToken');
+        let currentClaimId = null;
+
+        // Check if user is already logged in
+        if (authToken) {
+            showDashboard();
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('adminToken', authToken);
+                    showDashboard();
+                } else {
+                    document.getElementById('loginError').textContent = data.error;
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            } catch (error) {
+                document.getElementById('loginError').textContent = 'Login failed. Please try again.';
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        });
+
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('adminToken');
+            authToken = null;
+            showLogin();
+        });
+
+        // Show dashboard
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            loadClaims();
+            loadSpecials();
+        }
+
+        // Tab switching
+        document.getElementById('claimsTab').addEventListener('click', () => {
+            switchTab('claims');
+        });
+
+        document.getElementById('specialsTab').addEventListener('click', () => {
+            switchTab('specials');
+        });
+
+        function switchTab(tab) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active', 'border-b-2', 'border-green-500', 'text-green-600', 'font-semibold');
+                btn.classList.add('text-gray-500', 'hover:text-gray-700');
+            });
+
+            // Hide all sections
+            document.getElementById('claimsSection').classList.add('hidden');
+            document.getElementById('specialsSection').classList.add('hidden');
+
+            if (tab === 'claims') {
+                document.getElementById('claimsTab').classList.add('active', 'border-b-2', 'border-green-500', 'text-green-600', 'font-semibold');
+                document.getElementById('claimsTab').classList.remove('text-gray-500', 'hover:text-gray-700');
+                document.getElementById('claimsSection').classList.remove('hidden');
+            } else if (tab === 'specials') {
+                document.getElementById('specialsTab').classList.add('active', 'border-b-2', 'border-green-500', 'text-green-600', 'font-semibold');
+                document.getElementById('specialsTab').classList.remove('text-gray-500', 'hover:text-gray-700');
+                document.getElementById('specialsSection').classList.remove('hidden');
+                loadSpecials();
+            }
+        }
+
+        // Show login
+        function showLogin() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+
+        // Load claims
+        async function loadClaims() {
+            try {
+                const response = await fetch('/api/claims', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const claims = await response.json();
+                    updateStats(claims);
+                    renderClaims(claims);
+                } else if (response.status === 401) {
+                    showLogin();
+                }
+            } catch (error) {
+                console.error('Failed to load claims:', error);
+            }
+        }
+
+        // Update stats
+        function updateStats(claims) {
+            document.getElementById('totalClaims').textContent = claims.length;
+            document.getElementById('pendingClaims').textContent = claims.filter(c => c.status === 'pending').length;
+            document.getElementById('approvedClaims').textContent = claims.filter(c => c.status === 'approved').length;
+        }
+
+        // Render claims table
+        function renderClaims(claims) {
+            const tbody = document.getElementById('claimsTableBody');
+            tbody.innerHTML = claims.map(claim => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${claim.first_name} ${claim.last_name}</div>
+                        <div class="text-sm text-gray-500">${claim.email}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${claim.claim_type === 'hole_in_one' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'
+                }">
+                            ${claim.claim_type === 'hole_in_one' ? 'Hole-in-One' : 'Birdie'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${claim.course_id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(claim.submitted_at).toLocaleDateString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${claim.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    claim.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                }">
+                            ${claim.status.charAt(0).toUpperCase() + claim.status.slice(1)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="showClaimDetails('${claim.id}')" class="text-indigo-600 hover:text-indigo-900">
+                            View Details
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Show claim details modal
+        function showClaimDetails(claimId) {
+            // Implementation for claim details modal
+            currentClaimId = claimId;
+            document.getElementById('claimModal').classList.remove('hidden');
+        }
+
+        // Close modal
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('claimModal').classList.add('hidden');
+        });
+
+        // Specials management
+        document.getElementById('createSpecialForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const specialData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                type: formData.get('type'),
+                discount_amount: formData.get('discount_amount') || 0,
+                valid_from: formData.get('valid_from'),
+                valid_until: formData.get('valid_until')
+            };
+
+            try {
+                const response = await fetch('/api/specials', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(specialData)
+                });
+
+                if (response.ok) {
+                    const newSpecial = await response.json();
+                    alert('Special created successfully!');
+                    e.target.reset();
+                    loadSpecials();
+                } else {
+                    alert('Failed to create special');
+                }
+            } catch (error) {
+                console.error('Error creating special:', error);
+                alert('Error creating special');
+            }
+        });
+
+        async function loadSpecials() {
+            try {
+                const response = await fetch('/api/specials', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const specials = await response.json();
+                    renderSpecials(specials);
+                }
+            } catch (error) {
+                console.error('Failed to load specials:', error);
+            }
+        }
+
+        function renderSpecials(specials) {
+            const container = document.getElementById('specialsList');
+            if (specials.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No active specials. Create one above!</p>';
+                return;
+            }
+
+            container.innerHTML = specials.map(special => `
+                <div class="border rounded-lg p-4 mb-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg">${special.title}</h3>
+                        <span class="px-2 py-1 rounded text-xs ${special.type === 'discount' ? 'bg-green-100 text-green-800' :
+                    special.type === 'freebie' ? 'bg-blue-100 text-blue-800' :
+                        special.type === 'bonus_points' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-purple-100 text-purple-800'
+                }">
+                            ${special.type.replace('_', ' ')}
+                        </span>
+                    </div>
+                    <p class="text-gray-700 mb-3">${special.description}</p>
+                    <div class="text-sm text-gray-600 mb-3">
+                        <strong>Valid:</strong> ${new Date(special.valid_from).toLocaleDateString()} - ${new Date(special.valid_until).toLocaleDateString()}
+                        ${special.discount_amount > 0 ? `<br><strong>Discount:</strong> ${special.discount_amount}%` : ''}
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="deactivateSpecial('${special.id}')" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">
+                            Deactivate
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function deactivateSpecial(specialId) {
+            if (!confirm('Are you sure you want to deactivate this special?')) return;
+
+            try {
+                const response = await fetch(`/api/specials/${specialId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ active: false })
+                });
+
+                if (response.ok) {
+                    alert('Special deactivated successfully!');
+                    loadSpecials();
+                } else {
+                    alert('Failed to deactivate special');
+                }
+            } catch (error) {
+                console.error('Error deactivating special:', error);
+                alert('Error deactivating special');
+            }
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (authToken && !document.getElementById('dashboard').classList.contains('hidden')) {
+                loadClaims();
+            }
+        }, 30000);
+    </script>
+</body>
+
+</html>

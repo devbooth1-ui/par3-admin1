@@ -1,0 +1,25 @@
+ the box where it says more prizd{
+	"folders": [
+		{
+			"name": "Par 3 Challenge",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"node_modules": false,
+			"**/node_modules": false
+		},
+		"search.exclude": {
+			"**/node_modules": true,
+			"**/bower_components": true
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"bradlc.vscode-tailwindcss",
+			"esbenp.prettier-vscode",
+			"ms-vscode.vscode-typescript-next"
+		]
+	}
+}

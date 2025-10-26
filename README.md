@@ -1,19 +1,19 @@
-# admin1
+# Par3 Challenge Master Backup
 
-## Setup
+This folder contains all versions and backups of the Par3 Challenge golf app.
 
-1. Install dependencies  
-   `npm install`
+## Main Versions:
+- **par3-challenge-recovered** ⭐ MAIN COMPLETE VERSION
+- **par3-assets-backup** 📁 All video/image files (30MB)
+- **par3-challenge-source** Clean source code backup
 
-2. Run in development  
-   `npm run dev`
+## Safety Backups:
+- Multiple dated safety backups from August-September 2025
+- Historical versions and test recoveries
 
-3. Build for production  
-   `npm run build`
+## Recovery:
+- Use par3-challenge-recovered for full restoration
+- Copy assets from par3-assets-backup when deploying
+- Total backup size: 200MB+ across all versions
 
-## Code Structure
-
-- `components/` – React/Next.js components
-- `hooks/` – Custom React hooks
-- `lib/` – Shared library code
-- `pages/` – Next.js pages and API routes
+Created: September 8, 2025

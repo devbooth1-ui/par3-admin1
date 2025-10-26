@@ -22,7 +22,7 @@ export default function ClaimsQueue() {
   async function load() {
     try {
       setLoading(true);
-      const data = await apiGet<Claim[]>("/api/v1/claims?status=pending");
+      const data = await apiGet<Claim[]>("/api/claims?status=pending");
       setClaims(data);
       setError(null);
     } catch (e: any) {
@@ -37,7 +37,7 @@ export default function ClaimsQueue() {
 
   async function decide(id: string, approved: boolean) {
     try {
-      await apiPatch(`/api/v1/claims/${id}/decision`, { approved });
+      await apiPatch(`/api/claims/${id}`, { approved });
       await load();
     } catch (e: any) {
       alert(e.message || "Decision failed");

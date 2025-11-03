@@ -94,12 +94,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           update.$set.qualifiedForMillion = data.qualifiedForMillion;
         }
 
-        const result = await db.collection<PlayerDoc>("players").findOneAndUpdate(
-          { playerEmail: data.playerEmail },
-          update,
-          { upsert: true, returnDocument: "after" }
-        );
-        return res.status(201).json({ player: result.value });
+      await db.collection<PlayerDoc>("players").updateOne(
+  { playerEmail: data.playerEmail },
+  update,
+  { upsert: true }
+);
+const updated = await db.collection<PlayerDoc>("players").findOne({ playerEmail: data.playerEmail });
+return res.status(201).json({ player: updated || null });
+
       } else {
         const i = mem.players.findIndex(p => p.playerEmail === data.playerEmail);
         const base: PlayerDoc = i >= 0 ? mem.players[i] : {

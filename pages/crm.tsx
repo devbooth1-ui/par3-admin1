@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -39,15 +39,7 @@ export default function CRM() {
     course = stored[Number(courseIdx)] || null;
   }
 
-  // Fetch customers/players from backend
   const [customers, setCustomers] = useState<Customer[]>([]);
-  useEffect(() => {
-    fetch('/api/players')
-      .then(res => res.json())
-      .then(data => setCustomers(data))
-      .catch(() => setCustomers([]));
-  }, []);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);

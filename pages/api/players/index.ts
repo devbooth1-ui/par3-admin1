@@ -3,8 +3,8 @@ import { MongoClient, ObjectId } from "mongodb";
 
 const MONGODB_URI = process.env.MONGODB_URI || "";
 const MONGODB_DB  = process.env.MONGODB_DB  || "par3";
-let client: MongoClient | null = null;
 
+let client: MongoClient | null = null;
 async function getDb() {
   if (!MONGODB_URI) return null;
   if (!client) {
@@ -14,11 +14,7 @@ async function getDb() {
   return client.db(MONGODB_DB);
 }
 
-<<<<<<< HEAD
-// in-memory fallback for local
-=======
-// Dev-only in-memory fallback
->>>>>>> b55baa6 (api(players): upsert-by-email, coursesPlayed, points; GET returns {players:[]})
+// In-memory fallback (local/dev safety)
 type PlayerDoc = {
   _id?: string | ObjectId;
   playerEmail: string;
@@ -48,7 +44,6 @@ function normalize(body: any) {
   const b = typeof body === "string" ? JSON.parse(body || "{}") : (body || {});
   const first = b.firstName || "";
   const last  = b.lastName  || "";
-<<<<<<< HEAD
   const playerEmail = b.playerEmail ?? b.email ?? "";
   const playerName  = b.playerName ?? b.name ?? [first, last].filter(Boolean).join(" ").trim();
   const playerPhone = b.playerPhone ?? b.phone ?? "";
@@ -57,17 +52,7 @@ function normalize(body: any) {
   const qualifiedForMillion = b.qualifiedForMillion === true;
   return { playerEmail, playerName, playerPhone, course, points, qualifiedForMillion };
 }
-=======
-  const playerName  = b.playerName ?? b.name ?? [first, last].filter(Boolean).join(" ").trim();
-  const playerEmail = b.playerEmail ?? b.email ?? "";
-  const playerPhone = b.playerPhone ?? b.phone ?? "";
-  const course      = b.courseId ?? b.course ?? b.lastCourse ?? "";
-  const points      = typeof b.points === "number" ? b.points : undefined;
-  const qualifiedForMillion = !!b.qualifiedForMillion;
-  return { playerEmail, playerName, playerPhone, course, points, qualifiedForMillion };
-}
 
->>>>>>> b55baa6 (api(players): upsert-by-email, coursesPlayed, points; GET returns {players:[]})
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   cors(res);
   if (req.method === "OPTIONS") return res.status(200).end();
@@ -75,8 +60,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const db = await getDb();
 
+    // GET: list players (returns { players: [...] })
     if (req.method === "GET") {
-<<<<<<< HEAD
       if (db) {
         const list = await db.collection<PlayerDoc>("players")
           .find({})
@@ -88,6 +73,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({ players: mem.players });
       }
     }
+
+    // POST: upsert-by-email (accepts both legacy and new payload shapes)
     if (req.method === "POST") {
       const data = normalize(req.body);
       if (!data.playerEmail) {
@@ -111,14 +98,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           update.$set.qualifiedForMillion = data.qualifiedForMillion;
         }
 
-      await db.collection<PlayerDoc>("players").updateOne(
-  { playerEmail: data.playerEmail },
-  update,
-  { upsert: true }
-);
-const updated = await db.collection<PlayerDoc>("players").findOne({ playerEmail: data.playerEmail });
-return res.status(201).json({ player: updated || null });
-
+        // Two-step (avoids "possibly null" issues)
+        await db.collection<PlayerDoc>("players").updateOne(
+          { playerEmail: data.playerEmail },
+          update,
+          { upsert: true }
+        );
+        const updated = await db.collection<PlayerDoc>("players").findOne({ playerEmail: data.playerEmail });
+        return res.status(201).json({ player: updated });
       } else {
         const i = mem.players.findIndex(p => p.playerEmail === data.playerEmail);
         const base: PlayerDoc = i >= 0 ? mem.players[i] : {
@@ -141,87 +128,13 @@ return res.status(201).json({ player: updated || null });
       }
     }
 
+    // DELETE: by _id or playerEmail
     if (req.method === "DELETE") {
       const {_id, email, playerEmail} = (typeof req.body === "string" ? JSON.parse(req.body||"{}") : req.body) || {};
       if (!(_id || email || playerEmail)) {
         return res.status(400).json({ error: "_id or playerEmail required" });
       }
       if (db) {
-=======
-      if (db) {
-        const list = await db.collection<PlayerDoc>("players")
-          .find({})
-          .sort({ _id: -1 })
-          .limit(200)
-          .toArray();
-        return res.status(200).json({ players: list });
-      } else {
-        return res.status(200).json({ players: mem.players });
-      }
-    }
-
-    if (req.method === "POST") {
-      const data = normalize(req.body);
-      if (!data.playerEmail) {
-        return res.status(400).json({ error: "playerEmail (or email) is required" });
-      }
-
-      if (db) {
-        // Build update
-        const set: any = {
-          playerName: data.playerName ?? "",
-          playerPhone: data.playerPhone ?? "",
-        };
-        const update: any = {
-          $setOnInsert: { points: 0, qualifiedForMillion: false, claims: [] },
-          $set: set,
-        };
-        if (data.course) {
-          update.$addToSet = { ...(update.$addToSet || {}), coursesPlayed: data.course };
-        }
-        if (typeof data.points === "number") {
-          update.$set.points = data.points;
-        }
-        if (typeof data.qualifiedForMillion === "boolean") {
-          update.$set.qualifiedForMillion = !!data.qualifiedForMillion;
-        }
-
-        const result = await db.collection<PlayerDoc>("players").findOneAndUpdate(
-          { playerEmail: data.playerEmail },
-          update,
-          { upsert: true, returnDocument: "after" }
-        );
-        return res.status(201).json({ player: result.value });
-      } else {
-        // In-memory upsert
-        const i = mem.players.findIndex(p => p.playerEmail === data.playerEmail);
-        const base: PlayerDoc = i >= 0 ? mem.players[i] : {
-          _id: String(Date.now()),
-          playerEmail: data.playerEmail,
-          points: 0,
-          qualifiedForMillion: false,
-          claims: []
-        };
-        base.playerName  = data.playerName ?? base.playerName;
-        base.playerPhone = data.playerPhone ?? base.playerPhone;
-        if (data.course) {
-          base.coursesPlayed = Array.from(new Set([...(base.coursesPlayed || []), data.course]));
-        }
-        if (typeof data.points === "number") base.points = data.points;
-        if (typeof data.qualifiedForMillion === "boolean") base.qualifiedForMillion = !!data.qualifiedForMillion;
-
-        if (i >= 0) mem.players[i] = base; else mem.players.push(base);
-        return res.status(201).json({ player: base });
-      }
-    }
-
-    if (req.method === "DELETE") {
-      const {_id, email, playerEmail} = (typeof req.body === "string" ? JSON.parse(req.body||"{}") : req.body) || {};
-      if (!(_id || email || playerEmail)) {
-        return res.status(400).json({ error: "_id or playerEmail required" });
-      }
-      if (db) {
->>>>>>> b55baa6 (api(players): upsert-by-email, coursesPlayed, points; GET returns {players:[]})
         if (_id) {
           await db.collection("players").deleteOne({ _id: new ObjectId(String(_id)) });
         } else {
@@ -230,16 +143,8 @@ return res.status(201).json({ player: updated || null });
         return res.status(200).json({ ok: true });
       } else {
         const key = String(email || playerEmail || "");
-<<<<<<< HEAD
         if (_id) mem.players = mem.players.filter(p => String(p._id) !== String(_id));
         else if (key) mem.players = mem.players.filter(p => p.playerEmail !== key);
-=======
-        if (_id) {
-          mem.players = mem.players.filter(p => String(p._id) !== String(_id));
-        } else if (key) {
-          mem.players = mem.players.filter(p => p.playerEmail !== key);
-        }
->>>>>>> b55baa6 (api(players): upsert-by-email, coursesPlayed, points; GET returns {players:[]})
         return res.status(200).json({ ok: true });
       }
     }

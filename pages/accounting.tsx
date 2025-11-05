@@ -1,68 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
-
-const DUMMY_TRANSACTIONS = [
-    {
-        id: 1,
-        date: '2024-03-14',
-        customer: 'John Smith',
-        description: 'Par 3 Challenge Booking',
-        amount: 25.0,
-        status: 'completed',
-        type: 'income',
-        category: 'daily-play',
-    },
-    {
-        id: 2,
-        date: '2024-03-13',
-        customer: 'Sarah Johnson',
-        description: 'Tournament Entry Fee',
-        amount: 50.0,
-        status: 'completed',
-        type: 'income',
-        category: 'shootout-tournament',
-    },
-    {
-        id: 3,
-        date: '2024-03-12',
-        customer: 'Course Maintenance',
-        description: 'Equipment Repair',
-        amount: 150.0,
-        status: 'completed',
-        type: 'expense',
-        category: 'course',
-    },
-    {
-        id: 4,
-        date: '2024-03-11',
-        customer: 'Mike Davis',
-        description: 'Private Lesson',
-        amount: 75.0,
-        status: 'pending',
-        type: 'income',
-        category: 'daily-play',
-    },
-    {
-        id: 5,
-        date: '2024-03-10',
-        customer: 'Lisa Wilson',
-        description: 'Group Booking (4 players)',
-        amount: 100.0,
-        status: 'completed',
-        type: 'income',
-        category: 'daily-play',
-    },
-    {
-        id: 6,
-        date: '2024-03-09',
-        customer: 'Golf Digest',
-        description: 'Marketing Sponsorship',
-        amount: 500.0,
-        status: 'completed',
-        type: 'income',
-        category: 'marketing',
-    },
-];
 
 const CATEGORY_OPTIONS = [
     { value: 'all', label: 'All Categories' },
@@ -145,8 +82,29 @@ export default function Accounting() {
     const [transactionType, setTransactionType] = useState('all');
     const [dateRange, setDateRange] = useState('thisMonth');
     const [category, setCategory] = useState('all');
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const filteredTransactions = DUMMY_TRANSACTIONS.filter(
+    useEffect(() => {
+        async function fetchTransactions() {
+            setLoading(true);
+            setError(null);
+            try {
+                const res = await fetch('/api/accounting');
+                if (!res.ok) throw new Error('Failed to fetch transactions');
+                const data = await res.json();
+                setTransactions(data.transactions || []);
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchTransactions();
+    }, []);
+
+    const filteredTransactions = transactions.filter(
         (t) =>
             (transactionType === 'all' || t.type === transactionType) &&
             (category === 'all' || t.category === category)
@@ -266,89 +224,95 @@ export default function Accounting() {
                         </h3>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 text-base">
-                            <thead className="bg-gray-50 sticky top-0 z-10">
-                                <tr>
-                                    <Th>Date</Th>
-                                    <Th>Customer/Vendor</Th>
-                                    <Th>Description</Th>
-                                    <Th>Type</Th>
-                                    <Th>Category</Th>
-                                    <Th>Amount</Th>
-                                    <Th>Status</Th>
-                                    <Th>Actions</Th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredTransactions.map((t, idx) => (
-                                    <tr
-                                        key={t.id}
-                                        className={
-                                            idx % 2 === 0
-                                                ? 'bg-white hover:bg-blue-50'
-                                                : 'bg-blue-50 hover:bg-blue-100'
-                                        }
-                                    >
-                                        <Td>
-                                            {new Date(t.date).toLocaleDateString()}
-                                        </Td>
-                                        <Td className="font-medium">{t.customer}</Td>
-                                        <Td>{t.description}</Td>
-                                        <Td>{getTypeLabel(t.type)}</Td>
-                                        <Td>
-                                            <span className="px-2 py-1 rounded bg-gray-100 text-xs font-bold">
-                                                {CATEGORY_OPTIONS.find(c => c.value === t.category)?.label || t.category}
-                                            </span>
-                                        </Td>
-                                        <Td className="font-bold">
-                                            ${t.amount.toFixed(2)}
-                                        </Td>
-                                        <Td>
-                                            <span
-                                                className={`inline-block px-2 py-1 rounded border text-xs font-bold ${getStatusStyles(
-                                                    t.status
-                                                )}`}
-                                            >
-                                                {t.status}
-                                            </span>
-                                        </Td>
-                                        <Td>
-                                            <button
-                                                className="text-blue-700 font-bold hover:underline mr-2"
-                                                title="View"
-                                            >
-                                                <svg
-                                                    className="inline w-5 h-5 mr-1"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                                View
-                                            </button>
-                                            <button
-                                                className="text-green-700 font-bold hover:underline"
-                                                title="Edit"
-                                            >
-                                                <svg
-                                                    className="inline w-5 h-5 mr-1"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a4 4 0 01-1.414.828l-4 1a1 1 0 01-1.263-1.263l1-4a4 4 0 01.828-1.414z" />
-                                                </svg>
-                                                Edit
-                                            </button>
-                                        </Td>
+                        {loading ? (
+                            <div className="p-8 text-center text-gray-500">Loading transactions...</div>
+                        ) : error ? (
+                            <div className="p-8 text-center text-red-500">{error}</div>
+                        ) : (
+                            <table className="min-w-full divide-y divide-gray-200 text-base">
+                                <thead className="bg-gray-50 sticky top-0 z-10">
+                                    <tr>
+                                        <Th>Date</Th>
+                                        <Th>Customer/Vendor</Th>
+                                        <Th>Description</Th>
+                                        <Th>Type</Th>
+                                        <Th>Category</Th>
+                                        <Th>Amount</Th>
+                                        <Th>Status</Th>
+                                        <Th>Actions</Th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {filteredTransactions.map((t, idx) => (
+                                        <tr
+                                            key={t.id}
+                                            className={
+                                                idx % 2 === 0
+                                                    ? 'bg-white hover:bg-blue-50'
+                                                    : 'bg-blue-50 hover:bg-blue-100'
+                                            }
+                                        >
+                                            <Td>
+                                                {new Date(t.date).toLocaleDateString()}
+                                            </Td>
+                                            <Td className="font-medium">{t.customer}</Td>
+                                            <Td>{t.description}</Td>
+                                            <Td>{getTypeLabel(t.type)}</Td>
+                                            <Td>
+                                                <span className="px-2 py-1 rounded bg-gray-100 text-xs font-bold">
+                                                    {CATEGORY_OPTIONS.find(c => c.value === t.category)?.label || t.category}
+                                                </span>
+                                            </Td>
+                                            <Td className="font-bold">
+                                                ${t.amount.toFixed(2)}
+                                            </Td>
+                                            <Td>
+                                                <span
+                                                    className={`inline-block px-2 py-1 rounded border text-xs font-bold ${getStatusStyles(
+                                                        t.status
+                                                    )}`}
+                                                >
+                                                    {t.status}
+                                                </span>
+                                            </Td>
+                                            <Td>
+                                                <button
+                                                    className="text-blue-700 font-bold hover:underline mr-2"
+                                                    title="View"
+                                                >
+                                                    <svg
+                                                        className="inline w-5 h-5 mr-1"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    View
+                                                </button>
+                                                <button
+                                                    className="text-green-700 font-bold hover:underline"
+                                                    title="Edit"
+                                                >
+                                                    <svg
+                                                        className="inline w-5 h-5 mr-1"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a4 4 0 01-1.414.828l-4 1a1 1 0 01-1.263-1.263l1-4a4 4 0 01.828-1.414z" />
+                                                    </svg>
+                                                    Edit
+                                                </button>
+                                            </Td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
                     </div>
                 </section>
             </div>

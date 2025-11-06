@@ -1,9 +1,7 @@
 // Duplicate utils/adminAPI.js - keep consistent with src/utils/adminAPI.js
 const ADMIN_API_BASE = process.env.REACT_APP_ADMIN_API_BASE || 'https://par3-admin1.vercel.app';
 
-// API functions for admin communication
 export const adminAPI = {
-    // Submit birdie claim to admin portal
     submitBirdieClaim: async (playerData, outfitDescription = '', teeTime = '') => {
         try {
             const response = await fetch(`${ADMIN_API_BASE}/api/claims`, {
@@ -47,7 +45,6 @@ export const adminAPI = {
         }
     },
 
-    // Submit hole-in-one claim to admin portal
     submitHoleInOneClaim: async (playerData, paymentMethod, outfitDescription = '', teeTime = '') => {
         try {
             const response = await fetch(`${ADMIN_API_BASE}/api/claims`, {

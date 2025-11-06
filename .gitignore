@@ -28,3 +28,7 @@ yarn-error.log*
 
 # editor backups
 *.save
+
+# local backups
+*.BAK.*
+par3-admin1/

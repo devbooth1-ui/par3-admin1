@@ -1,27 +1,41 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET || '', { apiVersion: '2025-10-29.clover' });
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+if (!STRIPE_SECRET_KEY) {
+  // Build/runtime safety — surfaces clear error in logs
+  console.error('Missing STRIPE_SECRET_KEY env var');
+}
+
+const stripe = new Stripe(STRIPE_SECRET_KEY); // use dashboard default API version
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).end('Method Not Allowed');
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { amount, currency = 'usd', playerEmail = '', playerName = '', courseId = '' } = req.body;
-    if (!amount || typeof amount !== 'number') return res.status(400).json({ message: 'Invalid amount' });
+    if (req.method !== 'POST') {
+      res.setHeader('Allow', 'POST, OPTIONS');
+      return res.status(405).json({ error: 'Method Not Allowed' });
+    }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount, // amount in cents, e.g. 800 for $8.00
+    // expected body: { amountCents: number, currency?: string, metadata?: Record<string,string> }
+    const { amountCents, currency = 'usd', metadata = {} } =
+      typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+
+    if (!amountCents || typeof amountCents !== 'number' || amountCents < 50) {
+      return res.status(400).json({ error: 'amountCents >= 50 required' });
+    }
+
+    const pi = await stripe.paymentIntents.create({
+      amount: Math.floor(amountCents), // integer cents
       currency,
-      metadata: { playerEmail, playerName, courseId },
+      automatic_payment_methods: { enabled: true },
+      metadata,
     });
 
-    return res.status(200).json({ clientSecret: paymentIntent.client_secret });
+    return res.status(200).json({ clientSecret: pi.client_secret });
   } catch (err: any) {
-    console.error('create-payment-intent error', err);
-    return res.status(500).json({ message: err.message || 'Internal server error' });
+    console.error('payments.api error:', err?.message || err);
+    return res.status(500).json({ error: err?.message || 'Stripe error' });
   }
 }

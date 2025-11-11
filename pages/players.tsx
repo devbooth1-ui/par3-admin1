@@ -17,6 +17,10 @@ export default function PlayersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    fetchPlayers();
+  }, []);
+
+  function fetchPlayers() {
     const url = `${window.location.origin}/api/players`;
     fetch(url)
       .then((r) => r.json())
@@ -26,7 +30,17 @@ export default function PlayersPage() {
       })
       .catch(() => setPlayers([]))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  async function handleDelete(player: Player) {
+    const body = player._id ? { _id: player._id } : { playerEmail: player.playerEmail };
+    await fetch(`/api/players`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    fetchPlayers();
+  }
 
   return (
     <AdminLayout>
@@ -46,6 +60,12 @@ export default function PlayersPage() {
                 <div><strong>Last Course:</strong> {p.coursesPlayed?.[p.coursesPlayed.length - 1] || "—"}</div>
                 <div><strong>Points:</strong> {typeof p.points === "number" ? p.points : 0}</div>
                 <div><strong>Million Qual:</strong> {p.qualifiedForMillion ? "Yes" : "No"}</div>
+                <button
+                  className="mt-2 bg-red-500 text-white px-4 py-2 rounded"
+                  onClick={() => handleDelete(p)}
+                >
+                  Delete
+                </button>
               </div>
             ))}
           </div>

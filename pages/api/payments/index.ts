@@ -1,41 +1,46 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import Stripe from 'stripe';
+export const config = { api: { bodyParser: true } }
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
-if (!STRIPE_SECRET_KEY) {
-  // Build/runtime safety — surfaces clear error in logs
-  console.error('Missing STRIPE_SECRET_KEY env var');
+import type { NextApiRequest, NextApiResponse } from 'next'
+import Stripe from 'stripe'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+
+function allowCors(res: NextApiResponse) {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 }
 
-const stripe = new Stripe(STRIPE_SECRET_KEY); // use dashboard default API version
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  allowCors(res)
+  if (req.method === 'OPTIONS') return res.status(200).end()
 
-  try {
-    if (req.method !== 'POST') {
-      res.setHeader('Allow', 'POST, OPTIONS');
-      return res.status(405).json({ error: 'Method Not Allowed' });
+  // Debug log for incoming body and headers
+  console.log('DEBUG payments API:', {
+    method: req.method,
+    headers: req.headers,
+    body: req.body
+  })
+
+  if (req.method === 'POST') {
+    try {
+      const { amount = 800, currency = 'usd' } = (req.body ?? {}) as { amount?: number; currency?: string }
+      if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ error: 'Missing STRIPE_SECRET_KEY' })
+      if (!Number.isFinite(amount) || amount < 100) return res.status(400).json({ error: 'amount must be >= 100 (cents)' })
+
+      const intent = await stripe.paymentIntents.create({
+        amount,
+        currency,
+        // This makes backend confirmations with test cards work without return_url
+        automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+      })
+
+      return res.status(200).json({ clientSecret: intent.client_secret, id: intent.id })
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message || 'stripe_create_failed' })
     }
-
-    // expected body: { amountCents: number, currency?: string, metadata?: Record<string,string> }
-    const { amountCents, currency = 'usd', metadata = {} } =
-      typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-
-    if (!amountCents || typeof amountCents !== 'number' || amountCents < 50) {
-      return res.status(400).json({ error: 'amountCents >= 50 required' });
-    }
-
-    const pi = await stripe.paymentIntents.create({
-      amount: Math.floor(amountCents), // integer cents
-      currency,
-      automatic_payment_methods: { enabled: true },
-      metadata,
-    });
-
-    return res.status(200).json({ clientSecret: pi.client_secret });
-  } catch (err: any) {
-    console.error('payments.api error:', err?.message || err);
-    return res.status(500).json({ error: err?.message || 'Stripe error' });
   }
+
+  res.setHeader('Allow', 'POST, OPTIONS')
+  return res.status(405).end()
 }

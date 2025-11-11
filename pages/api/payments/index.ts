@@ -1,3 +1,5 @@
+export const config = { api: { bodyParser: true } }
+
 import type { NextApiRequest, NextApiResponse } from 'next'
 import Stripe from 'stripe'
 
@@ -12,6 +14,13 @@ function allowCors(res: NextApiResponse) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   allowCors(res)
   if (req.method === 'OPTIONS') return res.status(200).end()
+
+  // Debug log for incoming body and headers
+  console.log('DEBUG payments API:', {
+    method: req.method,
+    headers: req.headers,
+    body: req.body
+  })
 
   if (req.method === 'POST') {
     try {

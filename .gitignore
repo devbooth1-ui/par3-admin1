@@ -28,3 +28,4 @@ yarn-error.log*
 
 # editor backups
 *.save
+.env*.local

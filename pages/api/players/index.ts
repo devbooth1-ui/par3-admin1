@@ -56,6 +56,45 @@ function normalize(body: any) {
   return { playerEmail, playerName, playerPhone, course, points, qualifiedForMillion };
 }
 
+// helper: remove conflicting nested/parent paths in one payload
+function dedupePathConflicts(obj: any) {
+  const flat: Record<string, any> = {};
+  const seenParents = new Set<string>();
+  // flatten with dot-notation
+  function walk(cur: any, prefix = '') {
+    Object.entries(cur || {}).forEach(([k, v]) => {
+      const path = prefix ? `${prefix}.${k}` : k;
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        walk(v, path);
+      } else {
+        flat[path] = v;
+      }
+    });
+  }
+  walk(obj);
+  // detect conflicts: e.g., "a" and "a.b"
+  const paths = Object.keys(flat).sort((a,b)=>a.length-b.length);
+  const keep: Record<string, any> = {};
+  for (const p of paths) {
+    const parent = p.split('.').slice(0, -1).join('.');
+    if (parent && (parent in keep || seenParents.has(parent))) {
+      continue;
+    }
+    let acc = '';
+    p.split('.').forEach(seg => {
+      acc = acc ? `${acc}.${seg}` : seg;
+      seenParents.add(acc);
+    });
+    keep[p] = flat[p];
+  }
+  return keep;
+}
+
+// OPTIONAL: remove undefined/null keys
+function compact(obj: any) {
+  return Object.fromEntries(Object.entries(obj).filter(([_,v]) => v !== undefined && v !== null));
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   cors(res);
   if (req.method === "OPTIONS") return res.status(200).end();
@@ -78,44 +117,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // POST: upsert-by-email (accepts legacy + new payload shapes)
     if (req.method === "POST") {
-      const data = normalize(req.body);
+      // Sanitize payload
+      const body = req.body || (typeof (req as any).json === 'function' ? await (req as any).json() : {});
+      const clean = compact(body);
+      const updateMap = dedupePathConflicts(clean);
+      const data = normalize(updateMap);
       if (!data.playerEmail) {
         return res.status(400).json({ error: "playerEmail (or email) is required" });
       }
-
       if (db) {
-        const set: any = {
-          ...(data.playerName ? { playerName: data.playerName } : {}),
-          ...(data.playerPhone ? { playerPhone: data.playerPhone } : {}),
-        };
-
-        const update: any = {
-          $setOnInsert: { points: 0, qualifiedForMillion: false, claims: [] as ClaimLog[] },
-          ...(Object.keys(set).length ? { $set: set } : {})
-        };
-
-        if (data.course) {
-          update.$addToSet = { ...(update.$addToSet || {}), coursesPlayed: data.course };
-        }
-        if (typeof data.points === "number") {
-          update.$set = { ...(update.$set || {}), points: data.points };
-        }
-        if (typeof data.qualifiedForMillion === "boolean") {
-          update.$set = { ...(update.$set || {}), qualifiedForMillion: data.qualifiedForMillion };
-        }
-
+        // Upsert with sanitized payload
         await db.collection<PlayerDoc>("players").updateOne(
           { playerEmail: data.playerEmail },
-          update,
+          { $set: data },
           { upsert: true }
         );
-
         const updated = await db.collection<PlayerDoc>("players")
           .findOne({ playerEmail: data.playerEmail });
-
         return res.status(201).json({ player: updated });
       }
-
       // mem fallback
       const i = mem.players.findIndex(p => p.playerEmail === data.playerEmail);
       const base: PlayerDoc = i >= 0 ? mem.players[i] : {

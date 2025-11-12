@@ -37,3 +37,8 @@ par3-admin1/
 .env*
 *.bak
 *.backup
+
+# env
+.env*
+*.bak
+*.backup

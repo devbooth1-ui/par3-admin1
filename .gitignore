@@ -42,3 +42,11 @@ par3-admin1/
 .env*
 *.bak
 *.backup
+# --- ENV FILES (never commit real keys) ---
+.env
+.env.*
+!.env.example
+# --- common ---
+node_modules
+.next
+.DS_Store

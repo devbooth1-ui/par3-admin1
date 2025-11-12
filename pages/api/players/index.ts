@@ -95,6 +95,22 @@ function compact(obj: any) {
   return Object.fromEntries(Object.entries(obj).filter(([_,v]) => v !== undefined && v !== null));
 }
 
+// --- EMERGENCY HOT-FIX: drop child dotted paths if parent exists ---
+// Example: keep `qualifiedForMillion` and DROP `qualifiedForMillion.lastQualifiedAt` (or any `qualifiedForMillion.*`)
+function dropParentChildConflicts<T extends Record<string, any>>(data: T): T {
+  const cleaned: Record<string, any> = { ...data };
+  const keys = Object.keys(cleaned);
+  for (const k of keys) {
+    if (k.includes('.')) {
+      const parent = k.split('.')[0];
+      if (parent in cleaned) {
+        delete cleaned[k]; // parent + child causes Firestore conflict → drop child
+      }
+    }
+  }
+  return cleaned as T;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   cors(res);
   if (req.method === "OPTIONS") return res.status(200).end();
@@ -122,18 +138,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const clean = compact(body);
       const updateMap = dedupePathConflicts(clean);
       const data = normalize(updateMap);
-      if (!data.playerEmail) {
+      // --- HOT-FIX: drop parent/child conflicts ---
+      const safeData = dropParentChildConflicts(data);
+      if (!safeData.playerEmail) {
         return res.status(400).json({ error: "playerEmail (or email) is required" });
       }
       if (db) {
         // Upsert with sanitized payload
         await db.collection<PlayerDoc>("players").updateOne(
-          { playerEmail: data.playerEmail },
-          { $set: data },
+          { playerEmail: safeData.playerEmail },
+          { $set: safeData },
           { upsert: true }
         );
         const updated = await db.collection<PlayerDoc>("players")
-          .findOne({ playerEmail: data.playerEmail });
+          .findOne({ playerEmail: safeData.playerEmail });
         return res.status(201).json({ player: updated });
       }
       // mem fallback
